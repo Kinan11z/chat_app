@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:iconsax/iconsax.dart';
 
+import '../../../../core/utils/date_format.dart';
 import '../manager/chat_message/chat_message_bloc.dart';
 import '../widgets/chat_message_card.dart';
 
@@ -27,6 +28,7 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
+
     messageController = TextEditingController();
   }
 
@@ -80,9 +82,23 @@ class _ChatScreenBodyState extends State<ChatScreenBody> {
               widget.widget.userInfo.name ?? '',
               style: Theme.of(context).textTheme.labelLarge,
             ),
-            Text(
-              widget.widget.userInfo.lastActivated ?? '',
-              style: Theme.of(context).textTheme.labelSmall,
+            StreamBuilder(
+              stream: FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(widget.widget.userInfo.id)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                return Text(
+                  snapshot.data?.data()?['online'] == true
+                      ? 'Online'
+                      : 'Last seen ${AppDateTimeFormatter.dateAndTime(widget.widget.userInfo.lastActivated!)} at ${AppDateTimeFormatter.timeDate(widget.widget.userInfo.lastActivated!)}',
+                  style: Theme.of(context).textTheme.labelSmall!.copyWith(
+                        color: snapshot.data?.data()?['online'] == true
+                            ? Colors.green
+                            : Colors.grey,
+                      ),
+                );
+              },
             ),
           ],
         ),
@@ -201,9 +217,9 @@ class _ChatScreenBodyState extends State<ChatScreenBody> {
                                 onTap: () {
                                   context.read<ChatMessageBloc>().add(
                                         SendMessageEvent(
-                                          uid: widget.widget.userInfo.id ?? '',
                                           roomId: widget.widget.roomId,
                                           message: 'Assalamu Alaikum 👋',
+                                          userInfo: widget.widget.userInfo,
                                         ),
                                       );
                                 },
@@ -263,7 +279,7 @@ class _ChatScreenBodyState extends State<ChatScreenBody> {
                                 if (image != null) {
                                   context.read<ChatMessageBloc>().add(
                                         SendImageEvent(
-                                          uid: widget.widget.userInfo.id ?? '',
+                                          userInfo: widget.widget.userInfo,
                                           roomId: widget.widget.roomId,
                                           fileImage: image,
                                         ),
@@ -287,7 +303,7 @@ class _ChatScreenBodyState extends State<ChatScreenBody> {
                     if (widget.messageController.text != '') {
                       context.read<ChatMessageBloc>().add(
                             SendMessageEvent(
-                              uid: widget.widget.userInfo.id ?? '',
+                              userInfo: widget.widget.userInfo,
                               roomId: widget.widget.roomId,
                               message: widget.messageController.text,
                             ),

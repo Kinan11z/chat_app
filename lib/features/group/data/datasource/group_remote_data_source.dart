@@ -1,8 +1,13 @@
+import 'dart:io';
+
 import 'package:chat_app/features/group/data/models/chat_group_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../../core/utils/services/notification_services.dart';
+import '../../../auth/data/models/user_model.dart';
 import '../../../chat/data/models/message_model.dart';
 
 abstract class GroupRemoteDataSource {
@@ -17,8 +22,12 @@ abstract class GroupRemoteDataSource {
   });
   Future sendGroupMessage({
     required String message,
-    required String groupId,
+    required ChatGroupModel groupInfo,
     required String? type,
+  });
+  Future<void> sendImage({
+    required File imageFile,
+    required ChatGroupModel groupInfo,
   });
   Future removeMember({
     required String memberId,
@@ -61,12 +70,25 @@ class GroupRemoteDataSourceImp extends GroupRemoteDataSource {
   @override
   Future<void> sendGroupMessage({
     required String message,
-    required String groupId,
     required String? type,
+    required ChatGroupModel groupInfo,
   }) async {
+    List members = groupInfo.members ?? [];
+    members.remove(myUid);
+    List<UserModel> users = [];
+
+    firebaseFirestore
+        .collection('users')
+        .where('id', whereIn: members)
+        .get()
+        .then((snapshot) {
+      return snapshot.docs
+          .map((doc) => users.add(UserModel.fromJson(doc.data())))
+          .toList();
+    });
     String messageId = const Uuid().v1();
     MessageModel messageInfo = MessageModel(
-      id: messageId,
+      id: groupInfo.id,
       createdAt: DateTime.now().millisecondsSinceEpoch.toString(),
       fromId: myUid,
       message: message,
@@ -76,16 +98,54 @@ class GroupRemoteDataSourceImp extends GroupRemoteDataSource {
     );
     await firebaseFirestore
         .collection('groups')
-        .doc(groupId)
+        .doc(groupInfo.id)
         .collection('messages')
         .doc(messageId)
         .set(messageInfo.toJson());
-    firebaseFirestore.collection('groups').doc(groupId).update(
+    await firebaseFirestore.collection('groups').doc(groupInfo.id).update(
       {
         'last_message': type ?? message,
         'last_message_time': DateTime.now().millisecondsSinceEpoch.toString()
       },
     );
+    for (var element in users) {
+      if (element.pushToken != null) {
+        NotificationServices().sendNotification(
+          body: '${element.name}: $message',
+          title: groupInfo.name ?? '',
+          deviceToken: element.pushToken!,
+        );
+      }
+    }
+  }
+
+  @override
+  Future<void> sendImage({
+    required File imageFile,
+    required ChatGroupModel groupInfo,
+  }) async {
+    try {
+      String ext = imageFile.path.split('.').last.split('/').last.toLowerCase();
+      final cleanGroupId = groupInfo.id?.replaceAll(RegExp(r'[\[\], ]'), '');
+      final filePath =
+          '$cleanGroupId/${DateTime.now().millisecondsSinceEpoch}.$ext';
+
+      await Supabase.instance.client.storage
+          .from('images')
+          .upload(filePath, imageFile);
+
+      String imageUrl = Supabase.instance.client.storage
+          .from('images')
+          .getPublicUrl(filePath);
+      sendGroupMessage(
+        message: imageUrl,
+        groupInfo: groupInfo,
+        type: 'image',
+      );
+    } catch (e) {
+      print("Upload error: $e");
+      return null;
+    }
   }
 
   @override

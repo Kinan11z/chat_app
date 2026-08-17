@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../domain/usecases/sign_up_usecase.dart';
+import '../../../domain/usecases/update_active_use_case.dart';
 
 part 'auth_event.dart';
 part 'auth_state.dart';
@@ -17,6 +18,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<SignUpRequested>(_onSignUpRequested);
     on<CreateUserRequested>(_onCreateUserRequested);
     on<ResetPasswordRequested>(_onResetPasswordRequested);
+    on<UpdateActivateEvent>(_onUpdateActivateEvent);
   }
 
   Future<void> _onSignInRequested(
@@ -78,6 +80,22 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
       await usecase.call(event.email);
       emit(AuthSuccess('Reset email sent successfully'));
+    } catch (e) {
+      emit(AuthError(e.toString()));
+    }
+  }
+
+  Future<void> _onUpdateActivateEvent(
+      UpdateActivateEvent event, Emitter<AuthState> emit) async {
+    emit(AuthLoading());
+    try {
+      final usecase = UpdateActiveUseCase(
+        repository: AuthRepositoryImpl(
+          remoteDataSource: AuthRemoteDataSourceImp(),
+        ),
+      );
+      await usecase.call(event.online);
+      emit(AuthSuccess('Activation status updated successfully'));
     } catch (e) {
       emit(AuthError(e.toString()));
     }

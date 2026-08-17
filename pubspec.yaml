@@ -28,6 +28,11 @@ dependencies:
   cached_network_image: ^3.4.1
   provider: ^6.1.5+1
   shared_preferences: ^2.5.3
+  firebase_messaging: ^16.2.0
+  googleapis_auth: ^1.6.0
+  http: ^1.6.0
+  flutter_local_notifications: ^19.5.0
+  photo_view: ^0.15.0
 
 dev_dependencies:
   flutter_test:
@@ -41,6 +46,7 @@ flutter:
 
   assets:
     - assets/svg/
+    - google_services/notification_key.json
 
   
   # fonts:

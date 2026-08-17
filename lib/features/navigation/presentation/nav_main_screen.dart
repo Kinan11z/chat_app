@@ -1,4 +1,6 @@
+import 'package:chat_app/features/auth/presentation/manager/auth/auth_bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:provider/provider.dart';
 
@@ -18,6 +20,7 @@ class NavMainScreen extends StatefulWidget {
 
 class _NavMainScreenState extends State<NavMainScreen> {
   PageController pageController = PageController();
+  AuthBloc authBloc = AuthBloc();
   int currentIndex = 0;
   List<Widget> screens = const [
     ChatsHomeScreen(),
@@ -29,6 +32,17 @@ class _NavMainScreenState extends State<NavMainScreen> {
   void initState() {
     super.initState();
     Provider.of<ProviderApp>(context, listen: false).init();
+    SystemChannels.lifecycle.setMessageHandler((message) async {
+      print(message);
+      if (message.toString() == 'AppLifecycleState.resumed') {
+        authBloc.add(UpdateActivateEvent(online: true));
+      }
+      if (message.toString() == 'AppLifecycleState.paused' ||
+          message.toString() == 'AppLifecycleState.inactive') {
+        authBloc.add(UpdateActivateEvent(online: false));
+      }
+      return null;
+    });
   }
 
   @override

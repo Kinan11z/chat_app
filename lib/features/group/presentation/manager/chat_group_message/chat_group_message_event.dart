@@ -5,11 +5,20 @@ sealed class ChatGroupMessageEvent {}
 
 class SendMessageGroupEvent extends ChatGroupMessageEvent {
   final String message;
-  final String groupId;
+  final ChatGroupModel groupInfo;
   final String? type;
   SendMessageGroupEvent({
     required this.message,
-    required this.groupId,
+    required this.groupInfo,
     this.type,
+  });
+}
+
+class SendImageGroupEvent extends ChatGroupMessageEvent {
+  final File imageFile;
+  final ChatGroupModel groupInfo;
+  SendImageGroupEvent({
+    required this.imageFile,
+    required this.groupInfo,
   });
 }

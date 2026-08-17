@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:chat_app/features/chat/data/datasource/chat_remote_data_source.dart';
 import 'package:chat_app/features/chat/domain/repositories/chat_repository.dart';
 
+import '../../../auth/data/models/user_model.dart';
+
 class ChatRepositoryImp extends ChatRepository {
   final ChatRemoteDataSource remoteDataSource;
 
@@ -15,24 +17,28 @@ class ChatRepositoryImp extends ChatRepository {
   @override
   Future<void> sendMessage({
     required String message,
-    required String uid,
     required String roomId,
     required String? type,
+    required UserModel userInfo,
   }) async {
     return await remoteDataSource.sendMessage(
-        message: message, uid: uid, roomId: roomId, type: type);
+      message: message,
+      roomId: roomId,
+      type: type,
+      userInfo: userInfo,
+    );
   }
 
   @override
   Future<void> sendImage({
-    required String uid,
     required String roomId,
     required File imageFile,
+    required UserModel userInfo,
   }) async {
     return await remoteDataSource.sendImage(
-      uid: uid,
       roomId: roomId,
       imageFile: imageFile,
+      userInfo: userInfo,
     );
   }
 

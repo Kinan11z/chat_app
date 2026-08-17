@@ -2,11 +2,13 @@ import 'package:chat_app/core/supabase_config.dart';
 import 'package:chat_app/features/auth/presentation/screens/setup_profile_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/provider/provider.dart';
+import 'core/utils/services/notification_services.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/navigation/presentation/nav_main_screen.dart';
 import 'firebase_options.dart';
@@ -18,9 +20,19 @@ void main() async {
     url: SUPABASE_URL,
     publishableKey: SUPABASE_KEY,
   );
+  FirebaseMessaging.onBackgroundMessage(messageBackHandler);
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  FirebaseMessaging messaging = FirebaseMessaging.instance;
+  NotificationSettings settings = await messaging.requestPermission(
+    alert: true,
+    badge: true,
+    sound: true,
+  );
+  String? token = await messaging.getToken();
+  print("FCM Registration Token: $token");
   runApp(const MyApp());
 }
 

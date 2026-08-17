@@ -8,6 +8,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/utils/date_format.dart';
 import '../../../chat/presentation/screens/chat_screen.dart';
 
 class ChatCard extends StatelessWidget {
@@ -91,7 +92,7 @@ class ChatCard extends StatelessWidget {
                           label: Text(unreadMessages.length.toString()),
                         )
                       : Text(
-                          HelperFunctions.localDateTime(
+                          AppDateTimeFormatter.dateAndTime(
                             item.lastMessageTime ?? '',
                           ),
                         );

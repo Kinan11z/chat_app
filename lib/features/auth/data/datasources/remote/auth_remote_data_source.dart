@@ -6,6 +6,7 @@ abstract class AuthRemoteDataSource {
   Future<User> signIn(String email, String password);
   Future<User> signUp(String email, String password);
   Future<void> resetPassword(String email);
+  Future<void> updateActive(bool online);
   Future<void> createUser();
 }
 
@@ -64,5 +65,16 @@ class AuthRemoteDataSourceImp implements AuthRemoteDataSource {
     ).then(
       (value) => print('Succsssfull '),
     );
+  }
+
+  @override
+  Future<void> updateActive(bool online) async {
+    await firebaseFirestore
+        .collection('users')
+        .doc(firebaseAuth.currentUser?.uid)
+        .update({
+      'online': online,
+      'last_activated': DateTime.now().millisecondsSinceEpoch.toString(),
+    });
   }
 }

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -8,10 +9,24 @@ import '../../features/auth/data/models/user_model.dart';
 class ProviderApp with ChangeNotifier {
   ThemeMode themeMode = ThemeMode.system;
   int mainColor = 0xFF00BCD4;
+  final FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
+  final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
+
   UserModel? user;
   init() {
+    getToken();
     getUserDetails();
     getValuePref();
+  }
+
+  Future getToken() async {
+    FirebaseMessaging.instance.requestPermission();
+    FirebaseMessaging.instance.getToken().then(
+          (token) async => await firebaseFirestore
+              .collection('users')
+              .doc(firebaseAuth.currentUser?.uid)
+              .update({'push_token': token}),
+        );
   }
 
   getUserDetails() async {

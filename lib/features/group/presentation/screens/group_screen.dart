@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:chat_app/features/group/data/models/chat_group_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -5,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:iconsax/iconsax.dart';
 
+import '../../../../core/utils/helper_functions.dart';
 import '../../data/models/group_message_model.dart';
 import '../manager/chat_group_message/chat_group_message_bloc.dart';
 import '../widgets/group_message_card.dart';
@@ -114,13 +117,15 @@ class _GroupScreenState extends State<GroupScreen> {
                             .snapshots(),
                         builder: (context, snapshot) {
                           if (snapshot.hasData) {
-                            List<GroupMessageModel> groupMessages =
-                                snapshot.data!.docs
-                                    .map(
-                                      (e) =>
-                                          GroupMessageModel.fromJson(e.data()),
-                                    )
-                                    .toList();
+                            List<GroupMessageModel> groupMessages = snapshot
+                                .data!.docs
+                                .map(
+                                  (e) => GroupMessageModel.fromJson(e.data()),
+                                )
+                                .toList()
+                              ..sort(
+                                (a, b) => b.createdAt!.compareTo(a.createdAt!),
+                              );
                             return ListView.builder(
                               reverse: true,
                               itemCount: groupMessages.length,
@@ -154,7 +159,20 @@ class _GroupScreenState extends State<GroupScreen> {
                                     icon: const Icon(Iconsax.emoji_happy),
                                   ),
                                   IconButton(
-                                    onPressed: () {},
+                                    onPressed: () async {
+                                      File? image =
+                                          await HelperFunctions.pickImage();
+                                      if (image != null) {
+                                        BlocProvider.of<ChatGroupMessageBloc>(
+                                                context)
+                                            .add(
+                                          SendImageGroupEvent(
+                                            imageFile: image,
+                                            groupInfo: widget.groupInfo,
+                                          ),
+                                        );
+                                      }
+                                    },
                                     icon: const Icon(Iconsax.camera),
                                   ),
                                 ],
@@ -174,7 +192,7 @@ class _GroupScreenState extends State<GroupScreen> {
                           BlocProvider.of<ChatGroupMessageBloc>(context).add(
                             SendMessageGroupEvent(
                               message: messageController.text,
-                              groupId: widget.groupInfo.id!,
+                              groupInfo: widget.groupInfo,
                             ),
                           );
                         },

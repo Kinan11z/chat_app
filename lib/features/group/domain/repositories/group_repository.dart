@@ -1,9 +1,17 @@
+import 'dart:io';
+
+import '../../data/models/chat_group_model.dart';
+
 abstract class GroupRepository {
   Future createGroup({required String name, required List members});
   Future sendGroupMessage({
     required String message,
-    required String groupId,
+    required ChatGroupModel groupInfo,
     required String? type,
+  });
+  Future<void> sendImage({
+    required File imageFile,
+    required ChatGroupModel groupInfo,
   });
   Future editGroup({
     required String groupId,

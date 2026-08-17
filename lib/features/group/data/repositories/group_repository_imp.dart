@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:chat_app/features/group/data/datasource/group_remote_data_source.dart';
 
 import '../../domain/repositories/group_repository.dart';
+import '../models/chat_group_model.dart';
 
 class GroupRepositoryImp extends GroupRepository {
   final GroupRemoteDataSource remoteDataSource;
@@ -20,13 +23,24 @@ class GroupRepositoryImp extends GroupRepository {
   @override
   Future sendGroupMessage({
     required String message,
-    required String groupId,
+    required ChatGroupModel groupInfo,
     required String? type,
   }) {
     return remoteDataSource.sendGroupMessage(
       message: message,
-      groupId: groupId,
+      groupInfo: groupInfo,
       type: type,
+    );
+  }
+
+  @override
+  Future sendImage({
+    required File imageFile,
+    required ChatGroupModel groupInfo,
+  }) {
+    return remoteDataSource.sendImage(
+      imageFile: imageFile,
+      groupInfo: groupInfo,
     );
   }
 

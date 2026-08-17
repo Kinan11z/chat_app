@@ -1,20 +1,20 @@
+import 'dart:io';
+
 import '../../data/models/chat_group_model.dart';
 import '../repositories/group_repository.dart';
 
-class SendGroupMessageUseCase {
+class SendGroupImageUseCase {
   final GroupRepository repository;
 
-  SendGroupMessageUseCase({required this.repository});
+  SendGroupImageUseCase({required this.repository});
 
   Future<void> call({
-    required String message,
+    required File imageFile,
     required ChatGroupModel groupInfo,
-    required String? type,
   }) async {
-    await repository.sendGroupMessage(
-      message: message,
+    await repository.sendImage(
+      imageFile: imageFile,
       groupInfo: groupInfo,
-      type: type,
     );
   }
 }

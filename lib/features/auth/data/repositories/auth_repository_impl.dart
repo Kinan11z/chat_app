@@ -26,4 +26,9 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<void> createUser() async {
     await remoteDataSource.createUser();
   }
+
+  @override
+  Future<void> updateActive(bool online) {
+    return remoteDataSource.updateActive(online);
+  }
 }

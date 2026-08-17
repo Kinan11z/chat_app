@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:chat_app/features/auth/data/models/user_model.dart';
 import 'package:chat_app/features/chat/data/models/chat_room_model.dart';
 import 'package:chat_app/features/chat/data/models/message_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -7,18 +8,20 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../../core/utils/services/notification_services.dart';
+
 abstract class ChatRemoteDataSource {
   Future<void> createRoom(String email);
   Future<void> sendMessage({
     required String message,
-    required String uid,
     required String roomId,
     required String? type,
+    required UserModel userInfo,
   });
   Future<void> sendImage({
-    required String uid,
     required String roomId,
     required File imageFile,
+    required UserModel userInfo,
   });
   Future<void> readMessage({
     required String roomId,
@@ -69,18 +72,18 @@ class ChatRemoteDataSourceImp extends ChatRemoteDataSource {
   @override
   Future<void> sendMessage({
     required String message,
-    required String uid,
     required String roomId,
     required String? type,
+    required UserModel userInfo,
   }) async {
     String messageId = const Uuid().v1();
     MessageModel messageInfo = MessageModel(
       id: messageId,
       createdAt: DateTime.now().millisecondsSinceEpoch.toString(),
       fromId: myUid,
+      toId: userInfo.id,
       message: message,
       read: '',
-      toId: uid,
       type: type ?? 'text',
     );
     await firebaseFirestore
@@ -89,19 +92,24 @@ class ChatRemoteDataSourceImp extends ChatRemoteDataSource {
         .collection('messages')
         .doc(messageId)
         .set(messageInfo.toJson());
-    firebaseFirestore.collection('rooms').doc(roomId).update(
+    await firebaseFirestore.collection('rooms').doc(roomId).update(
       {
         'last_message': type ?? message,
         'last_message_time': DateTime.now().millisecondsSinceEpoch.toString()
       },
     );
+    NotificationServices().sendNotification(
+      body: message,
+      title: FirebaseAuth.instance.currentUser!.displayName ?? '',
+      deviceToken: userInfo.pushToken!,
+    );
   }
 
   @override
   Future<void> sendImage({
-    required String uid,
     required String roomId,
     required File imageFile,
+    required UserModel userInfo,
   }) async {
     try {
       String ext = imageFile.path.split('.').last.split('/').last.toLowerCase();
@@ -116,7 +124,12 @@ class ChatRemoteDataSourceImp extends ChatRemoteDataSource {
       String imageUrl = Supabase.instance.client.storage
           .from('images')
           .getPublicUrl(filePath);
-      sendMessage(message: imageUrl, uid: uid, roomId: roomId, type: 'image');
+      sendMessage(
+        message: imageUrl,
+        roomId: roomId,
+        type: 'image',
+        userInfo: userInfo,
+      );
     } catch (e) {
       print("Upload error: $e");
       return null;

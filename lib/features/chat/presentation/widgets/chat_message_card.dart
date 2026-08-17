@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:iconsax/iconsax.dart';
 
 import '../../../../core/utils/helper_functions.dart';
+import '../../../../core/utils/photo_view.dart';
 import '../../data/models/message_model.dart';
 import '../manager/chat_message/chat_message_bloc.dart';
 
@@ -108,10 +109,21 @@ class _ChatMessageCardBodyState extends State<ChatMessageCardBody> {
                           padding: const EdgeInsets.only(bottom: 8),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(12),
-                            child: CachedNetworkImage(
-                              imageUrl: widget.messageInfo.message ?? '',
-                              placeholder: (context, url) => const Center(
-                                child: CircularProgressIndicator(),
+                            child: GestureDetector(
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => PhotoViewScreen(
+                                    imageProvider: NetworkImage(
+                                        widget.messageInfo.message ?? ''),
+                                  ),
+                                ),
+                              ),
+                              child: CachedNetworkImage(
+                                imageUrl: widget.messageInfo.message ?? '',
+                                placeholder: (context, url) => const Center(
+                                  child: CircularProgressIndicator(),
+                                ),
                               ),
                             ),
                           ),

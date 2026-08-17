@@ -4,28 +4,28 @@ part of 'chat_message_bloc.dart';
 sealed class ChatMessageEvent {}
 
 class SendMessageEvent extends ChatMessageEvent {
-  final String uid;
   final String roomId;
   final String message;
   final String? type;
+  final UserModel userInfo;
 
   SendMessageEvent({
-    required this.uid,
     required this.roomId,
     required this.message,
+    required this.userInfo,
     this.type,
   });
 }
 
 class SendImageEvent extends ChatMessageEvent {
-  final String uid;
   final String roomId;
   final File fileImage;
+  final UserModel userInfo;
 
   SendImageEvent({
-    required this.uid,
     required this.roomId,
     required this.fileImage,
+    required this.userInfo,
   });
 }
 

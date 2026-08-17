@@ -23,3 +23,9 @@ class ResetPasswordRequested extends AuthEvent {
 
   ResetPasswordRequested({required this.email});
 }
+
+class UpdateActivateEvent extends AuthEvent {
+  final bool online;
+
+  UpdateActivateEvent({required this.online});
+}

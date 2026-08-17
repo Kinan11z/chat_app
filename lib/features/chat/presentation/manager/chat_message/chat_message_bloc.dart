@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:bloc/bloc.dart';
 import 'package:meta/meta.dart';
 
+import '../../../../auth/data/models/user_model.dart';
 import '../../../data/datasource/chat_remote_data_source.dart';
 import '../../../data/repositories/chat_repository_imp.dart';
 import '../../../domain/usecases/delete_message_use_case.dart';
@@ -32,8 +33,8 @@ class ChatMessageBloc extends Bloc<ChatMessageEvent, ChatMessageState> {
       await usecase.call(
         message: event.message,
         roomId: event.roomId,
-        uid: event.uid,
         type: event.type,
+        userInfo: event.userInfo,
       );
       emit(ChatMessageSuccess(message: 'Send Message Succsfully'));
     } catch (e) {
@@ -52,8 +53,8 @@ class ChatMessageBloc extends Bloc<ChatMessageEvent, ChatMessageState> {
       );
       await usecase.call(
         roomId: event.roomId,
-        uid: event.uid,
         fileImage: event.fileImage,
+        userInfo: event.userInfo,
       );
       emit(ChatMessageSuccess(message: 'Send Image Succsfully'));
     } catch (e) {

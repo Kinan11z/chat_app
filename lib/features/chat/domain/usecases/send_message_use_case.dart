@@ -1,5 +1,7 @@
 import 'package:chat_app/features/chat/domain/repositories/chat_repository.dart';
 
+import '../../../auth/data/models/user_model.dart';
+
 class SendMessageUseCase {
   final ChatRepository repository;
 
@@ -7,15 +9,15 @@ class SendMessageUseCase {
 
   Future<void> call({
     required String message,
-    required String uid,
     required String roomId,
     required String? type,
+    required UserModel userInfo,
   }) async {
     await repository.sendMessage(
       message: message,
       roomId: roomId,
-      uid: uid,
       type: type,
+      userInfo: userInfo,
     );
   }
 }

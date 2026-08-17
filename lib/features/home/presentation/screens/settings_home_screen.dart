@@ -6,6 +6,7 @@ import 'package:iconsax/iconsax.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/provider/provider.dart';
+import '../../../auth/presentation/manager/auth/auth_bloc.dart';
 import '../../../setting/presentation/screens/profile_screen.dart';
 import '../../../setting/presentation/screens/qr_code_screen.dart';
 
@@ -15,6 +16,8 @@ class SettingsHomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<ProviderApp>(context);
+    AuthBloc authBloc = AuthBloc();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Settings'),
@@ -102,7 +105,10 @@ class SettingsHomeScreen extends StatelessWidget {
             ),
             Card(
               child: ListTile(
-                onTap: () async => await FirebaseAuth.instance.signOut(),
+                onTap: () async {
+                  authBloc.add(UpdateActivateEvent(online: false));
+                  await FirebaseAuth.instance.signOut();
+                },
                 title: Text('Signout'),
                 trailing: Icon(Iconsax.logout_1),
               ),
