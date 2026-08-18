@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'core/di/injection.dart';
 import 'core/provider/provider.dart';
 import 'core/utils/services/notification_services.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
@@ -25,14 +26,15 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  FirebaseMessaging messaging = FirebaseMessaging.instance;
-  NotificationSettings settings = await messaging.requestPermission(
-    alert: true,
-    badge: true,
-    sound: true,
-  );
-  String? token = await messaging.getToken();
-  print("FCM Registration Token: $token");
+  await init();
+  // FirebaseMessaging messaging = FirebaseMessaging.instance;
+  // NotificationSettings settings = await messaging.requestPermission(
+  //   alert: true,
+  //   badge: true,
+  //   sound: true,
+  // );
+  // String? token = await messaging.getToken();
+  // print("FCM Registration Token: $token");
   runApp(const MyApp());
 }
 

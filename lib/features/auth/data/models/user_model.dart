@@ -1,4 +1,6 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
+import '../../domain/entities/user_entity.dart';
+
 class UserModel {
   String? id;
   String? name;
@@ -53,5 +55,20 @@ class UserModel {
     data['online'] = online;
     data['my_users'] = myUsers;
     return data;
+  }
+
+  UserEntity toEntity() {
+    return UserEntity(
+      id: id ?? '',
+      name: name ?? '',
+      email: email ?? '',
+      imageUrl: imageUrl,
+      about: about,
+      createdAt: createdAt,
+      lastActivated: lastActivated,
+      pushToken: pushToken,
+      online: online ?? false,
+      myUsers: myUsers ?? [],
+    );
   }
 }

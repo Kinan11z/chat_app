@@ -1,11 +1,21 @@
 import 'package:chat_app/features/auth/domain/repositories/auth_repository.dart';
+import 'package:dartz/dartz.dart';
 
-class UpdateActiveUseCase {
+import '../../../../core/error/failure.dart';
+import '../../../../core/usecases/usecase.dart';
+
+class UpdateActiveParams {
+  final bool online;
+  const UpdateActiveParams({required this.online});
+}
+
+class UpdateActiveUseCase extends UseCase<void, UpdateActiveParams> {
   final AuthRepository repository;
 
   UpdateActiveUseCase({required this.repository});
 
-  Future<void> call(bool online) async {
-    return await repository.updateActive(online);
+  @override
+  Future<Either<Failure, void>> call(UpdateActiveParams params) async {
+    return await repository.updateActive(online: params.online);
   }
 }

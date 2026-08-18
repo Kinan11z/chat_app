@@ -12,7 +12,7 @@ class GroupRepositoryImp extends GroupRepository {
   @override
   Future createGroup({
     required String name,
-    required List members,
+    required List<String> members,
   }) {
     return remoteDataSource.createGroup(
       name: name,
@@ -46,7 +46,9 @@ class GroupRepositoryImp extends GroupRepository {
 
   @override
   Future editGroup(
-      {required String groupId, required String name, required List members}) {
+      {required String groupId,
+      required String name,
+      required List<String> members}) {
     return remoteDataSource.editGroup(
       groupId: groupId,
       name: name,

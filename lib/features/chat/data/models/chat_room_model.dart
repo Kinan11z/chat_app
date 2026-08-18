@@ -1,6 +1,8 @@
+import '../../domain/entities/chat_room_entity.dart';
+
 class ChatRoomModel {
   String? id;
-  List? members;
+  List<String>? members;
   String? lastMessage;
   String? lastMessageTime;
   String? createdAt;
@@ -18,7 +20,7 @@ class ChatRoomModel {
   ) {
     return ChatRoomModel(
       id: json['id'] ?? '' as String?,
-      members: json['members'] ?? [] as List?,
+      members: json['members'] ?? [] as List<String>?,
       lastMessage: json['last_message'] ?? '' as String?,
       lastMessageTime: json['last_message_time'] ?? '' as String?,
       createdAt: json['created_at'] ?? '' as String?,
@@ -34,5 +36,15 @@ class ChatRoomModel {
     data['created_at'] = createdAt;
 
     return data;
+  }
+
+  ChatRoomEntity toEntity() {
+    return ChatRoomEntity(
+      createdAt: createdAt ?? '',
+      id: id ?? '',
+      lastMessage: lastMessage ?? '',
+      lastMessageTime: lastMessageTime ?? '',
+      members: members ?? [],
+    );
   }
 }

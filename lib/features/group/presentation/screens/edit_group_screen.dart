@@ -24,7 +24,7 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
       TextEditingController(text: 'group name');
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
-  List members = [];
+  List<String> members = [];
   List myContacts = [];
 
   @override
@@ -169,24 +169,23 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
                                       (a, b) => a.name!.compareTo(b.name!),
                                     );
                                   return ListView.builder(
-                                      itemCount: users.length,
-                                      itemBuilder: (context, index) =>
-                                          CheckboxListTile(
-                                        value:
-                                            members.contains(users[index].id),
-                                        onChanged: (value) {
-                                          setState(() {
-                                            if (value == true) {
-                                              members.add(users[index].id!);
-                                            } else {
-                                              members.remove(users[index].id!);
-                                            }
-                                          });
-                                        },
-                                        checkboxShape: CircleBorder(),
-                                        title: Text(users[index].name!),
-                                      ),
-                                    );
+                                    itemCount: users.length,
+                                    itemBuilder: (context, index) =>
+                                        CheckboxListTile(
+                                      value: members.contains(users[index].id),
+                                      onChanged: (value) {
+                                        setState(() {
+                                          if (value == true) {
+                                            members.add(users[index].id!);
+                                          } else {
+                                            members.remove(users[index].id!);
+                                          }
+                                        });
+                                      },
+                                      checkboxShape: CircleBorder(),
+                                      title: Text(users[index].name!),
+                                    ),
+                                  );
                                 }
                                 return const Center(
                                   child: CircularProgressIndicator(),

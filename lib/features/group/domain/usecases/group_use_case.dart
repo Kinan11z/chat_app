@@ -5,7 +5,8 @@ class GroupUseCase {
 
   GroupUseCase({required this.repository});
 
-  Future<void> call({required String name, required List members}) async {
+  Future<void> call(
+      {required String name, required List<String> members}) async {
     await repository.createGroup(name: name, members: members);
   }
 }

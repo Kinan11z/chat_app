@@ -8,7 +8,7 @@ class EditGroupUseCase {
   Future<void> call({
     required String groupId,
     required String name,
-    required List members,
+    required List<String> members,
   }) async {
     await repository.editGroup(
       groupId: groupId,

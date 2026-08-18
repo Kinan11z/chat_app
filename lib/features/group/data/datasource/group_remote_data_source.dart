@@ -13,12 +13,12 @@ import '../../../chat/data/models/message_model.dart';
 abstract class GroupRemoteDataSource {
   Future createGroup({
     required String name,
-    required List members,
+    required List<String> members,
   });
   Future editGroup({
     required String groupId,
     required String name,
-    required List members,
+    required List<String> members,
   });
   Future sendGroupMessage({
     required String message,
@@ -48,7 +48,8 @@ class GroupRemoteDataSourceImp extends GroupRemoteDataSource {
   final String myUid = FirebaseAuth.instance.currentUser!.uid;
   final String dateNow = DateTime.now().millisecondsSinceEpoch.toString();
   @override
-  Future createGroup({required String name, required List members}) async {
+  Future createGroup(
+      {required String name, required List<String> members}) async {
     final String groupId = const Uuid().v1();
     members.add(myUid);
     ChatGroupModel groupInfo = ChatGroupModel(
@@ -152,7 +153,7 @@ class GroupRemoteDataSourceImp extends GroupRemoteDataSource {
   Future editGroup({
     required String groupId,
     required String name,
-    required List members,
+    required List<String> members,
   }) async {
     await firebaseFirestore.collection('groups').doc(groupId).update({
       'name': name,

@@ -1,9 +1,11 @@
+import '../../domain/entities/chat_group_entity.dart';
+
 class ChatGroupModel {
   String? id;
   String? name;
   String? image;
-  List? members;
-  List? admins;
+  List<String>? members;
+  List<String>? admins;
   String? lastMessage;
   String? lastMessageTime;
   String? createdAt;
@@ -26,8 +28,8 @@ class ChatGroupModel {
       id: json['id'] ?? '' as String?,
       name: json['name'] ?? '' as String?,
       image: json['image'] ?? '' as String?,
-      members: json['members'] ?? [] as List?,
-      admins: json['admins_id'] ?? [] as List?,
+      members: json['members'] ?? [] as List<String>?,
+      admins: json['admins_id'] ?? [] as List<String>?,
       lastMessage: json['last_message'] ?? '' as String?,
       lastMessageTime: json['last_message_time'] ?? '' as String?,
       createdAt: json['created_at'] ?? '' as String?,
@@ -46,5 +48,18 @@ class ChatGroupModel {
     data['created_at'] = createdAt;
 
     return data;
+  }
+
+  ChatGroupEntity toEntity() {
+    return ChatGroupEntity(
+      id: id ?? '',
+      name: name ?? '',
+      image: image ?? '',
+      members: members ?? [],
+      admins: admins ?? [],
+      lastMessage: lastMessage ?? '',
+      lastMessageTime: lastMessageTime ?? '',
+      createdAt: createdAt ?? '',
+    );
   }
 }

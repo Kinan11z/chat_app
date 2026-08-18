@@ -1,9 +1,18 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:dartz/dartz.dart';
+
+import '../../../../core/error/failure.dart';
+import '../entities/user_entity.dart';
 
 abstract class AuthRepository {
-  Future<User> signIn(String email, String password);
-  Future<User> signUp(String email, String password);
-  Future<void> resetPassword(String email);
-  Future<void> updateActive(bool online);
-  Future<void> createUser();
+  Future<Either<Failure, UserEntity>> signIn({
+    required String email,
+    required String password,
+  });
+  Future<Either<Failure, UserEntity>> signUp({
+    required String email,
+    required String password,
+  });
+  Future<Either<Failure, void>> resetPassword({required String email});
+  Future<Either<Failure, void>> updateActive({required bool online});
+  Future<Either<Failure, void>> createUser();
 }

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/di/injection.dart';
 import '../../../core/provider/provider.dart';
 import '../../auth/data/models/user_model.dart';
 import '../../home/presentation/screens/chats_home_screen.dart';
@@ -20,7 +21,7 @@ class NavMainScreen extends StatefulWidget {
 
 class _NavMainScreenState extends State<NavMainScreen> {
   PageController pageController = PageController();
-  AuthBloc authBloc = AuthBloc();
+  AuthBloc authBloc = getIt<AuthBloc>();
   int currentIndex = 0;
   List<Widget> screens = const [
     ChatsHomeScreen(),

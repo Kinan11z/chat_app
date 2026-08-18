@@ -5,6 +5,7 @@ import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/di/injection.dart';
 import '../../../../core/provider/provider.dart';
 import '../../../auth/presentation/manager/auth/auth_bloc.dart';
 import '../../../setting/presentation/screens/profile_screen.dart';
@@ -16,7 +17,7 @@ class SettingsHomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<ProviderApp>(context);
-    AuthBloc authBloc = AuthBloc();
+    AuthBloc authBloc = getIt<AuthBloc>();
 
     return Scaffold(
       appBar: AppBar(

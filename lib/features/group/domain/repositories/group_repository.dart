@@ -3,7 +3,7 @@ import 'dart:io';
 import '../../data/models/chat_group_model.dart';
 
 abstract class GroupRepository {
-  Future createGroup({required String name, required List members});
+  Future createGroup({required String name, required List<String> members});
   Future sendGroupMessage({
     required String message,
     required ChatGroupModel groupInfo,
@@ -16,7 +16,7 @@ abstract class GroupRepository {
   Future editGroup({
     required String groupId,
     required String name,
-    required List members,
+    required List<String> members,
   });
   Future removeMember({
     required String memberId,

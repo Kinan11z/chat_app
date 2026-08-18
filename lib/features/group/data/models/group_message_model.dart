@@ -1,4 +1,6 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
+import '../../domain/entities/group_message_entity.dart';
+
 class GroupMessageModel {
   String? id;
   String? fromId;
@@ -41,5 +43,17 @@ class GroupMessageModel {
     data['read'] = read;
     data['created_at'] = createdAt;
     return data;
+  }
+
+  GroupMessageEntity toEntity() {
+    return GroupMessageEntity(
+      id: id ?? '',
+      fromId: fromId ?? '',
+      toId: toId ?? '',
+      message: message ?? '',
+      type: type ?? '',
+      createdAt: createdAt ?? '',
+      read: read ?? '',
+    );
   }
 }

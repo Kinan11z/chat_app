@@ -1,16 +1,15 @@
 import 'package:chat_app/core/utils/validators.dart';
 import 'package:chat_app/features/auth/presentation/manager/auth/auth_bloc.dart';
 import 'package:chat_app/features/auth/presentation/screens/forget_password_screen.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:iconsax/iconsax.dart';
 
+import '../../../../core/di/injection.dart';
 import '../../../../core/utils/widgets/app_button.dart';
 import '../../../../core/utils/widgets/app_outline_button.dart';
 import '../../../../core/utils/widgets/app_text_field.dart';
 import '../../../../core/utils/widgets/logo_app.dart';
-import 'setup_profile_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -41,7 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => AuthBloc(),
+      create: (context) => getIt<AuthBloc>(),
       child: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthSuccess) {

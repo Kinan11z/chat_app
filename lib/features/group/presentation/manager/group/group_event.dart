@@ -5,7 +5,7 @@ sealed class GroupEvent {}
 
 class CreateGroupEvent extends GroupEvent {
   final String name;
-  final List members;
+  final List<String> members;
 
   CreateGroupEvent({
     required this.name,
@@ -16,7 +16,7 @@ class CreateGroupEvent extends GroupEvent {
 class EditGroupEvent extends GroupEvent {
   final String groupId;
   final String name;
-  final List members;
+  final List<String> members;
 
   EditGroupEvent({
     required this.groupId,

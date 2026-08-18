@@ -57,14 +57,7 @@ class AuthRemoteDataSourceImp implements AuthRemoteDataSource {
         .doc(firebaseAuth.currentUser?.uid)
         .set(
           userModel.toJson(),
-        )
-        .onError(
-      (error, stackTrace) {
-        print('Your Error $error');
-      },
-    ).then(
-      (value) => print('Succsssfull '),
-    );
+        );
   }
 
   @override
