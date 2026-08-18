@@ -6,7 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:iconsax/iconsax.dart';
 
-import '../../../auth/data/models/user_model.dart';
+import '../../../../core/di/injection.dart';
+import '../../../auth/domain/entities/user_entity.dart';
 
 class ContactCard extends StatelessWidget {
   const ContactCard({
@@ -14,11 +15,11 @@ class ContactCard extends StatelessWidget {
     required this.user,
   });
 
-  final UserModel user;
+  final UserEntity user;
 
   @override
   Widget build(BuildContext context) {
-    final chatRoomBloc = ChatRoomBloc();
+    final chatRoomBloc = getIt<ChatRoomBloc>();
     List<String> roomId = [user.id!, FirebaseAuth.instance.currentUser!.uid]
       ..sort(
         (a, b) => a.compareTo(b),

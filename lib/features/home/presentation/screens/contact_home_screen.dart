@@ -7,6 +7,7 @@ import 'package:iconsax/iconsax.dart';
 import '../../../../core/utils/widgets/app_button.dart';
 import '../../../../core/utils/widgets/app_text_field.dart';
 import '../../../auth/data/models/user_model.dart';
+import '../../../auth/domain/entities/user_entity.dart';
 import '../../../contact/presentation/manager/bloc/contact_bloc.dart';
 import '../../../contact/presentation/widgets/contact_card.dart';
 
@@ -160,18 +161,18 @@ class _ContactHomeScreenState extends State<ContactHomeScreen> {
                         .snapshots(),
                     builder: (context, snapshot) {
                       if (snapshot.hasData) {
-                        List<UserModel> users = snapshot.data!.docs
+                        List<UserEntity> users = snapshot.data!.docs
                             .map(
-                              (e) => UserModel.fromJson(e.data()),
+                              (e) => UserModel.fromJson(e.data()).toEntity(),
                             )
                             .where(
-                              (element) => element.name!
+                              (element) => element.name
                                   .toLowerCase()
                                   .startsWith(searchCon.text.toLowerCase()),
                             )
                             .toList()
                           ..sort(
-                            (a, b) => a.name!.compareTo(b.name!),
+                            (a, b) => a.name.compareTo(b.name),
                           );
                         return Expanded(
                           child: ListView.builder(

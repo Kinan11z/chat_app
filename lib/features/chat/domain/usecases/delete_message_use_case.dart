@@ -1,15 +1,28 @@
 import 'package:chat_app/features/chat/domain/repositories/chat_repository.dart';
+import 'package:dartz/dartz.dart';
 
-class DeleteMessageUseCase {
+import '../../../../core/error/failure.dart';
+import '../../../../core/usecases/usecase.dart';
+
+class DeleteChatMessageParams {
+  final String roomId;
+  final List<String> messageIds;
+  const DeleteChatMessageParams({
+    required this.roomId,
+    required this.messageIds,
+  });
+}
+
+class DeleteMessageUseCase extends UseCase<void, DeleteChatMessageParams> {
   final ChatRepository repository;
 
   DeleteMessageUseCase({required this.repository});
 
-  Future<void> call(
-      {required String roomId, required List<String> messageIds}) async {
-    await repository.deleteMessage(
-      messageIds: messageIds,
-      roomId: roomId,
+  @override
+  Future<Either<Failure, void>> call(DeleteChatMessageParams params) async {
+    return await repository.deleteMessage(
+      messageIds: params.messageIds,
+      roomId: params.roomId,
     );
   }
 }

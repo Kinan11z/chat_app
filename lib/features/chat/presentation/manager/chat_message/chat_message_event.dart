@@ -7,7 +7,7 @@ class SendMessageEvent extends ChatMessageEvent {
   final String roomId;
   final String message;
   final String? type;
-  final UserModel userInfo;
+  final UserEntity userInfo;
 
   SendMessageEvent({
     required this.roomId,
@@ -19,12 +19,14 @@ class SendMessageEvent extends ChatMessageEvent {
 
 class SendImageEvent extends ChatMessageEvent {
   final String roomId;
-  final File fileImage;
-  final UserModel userInfo;
+  final Uint8List fileImage;
+  final String fileExtension;
+  final UserEntity userInfo;
 
   SendImageEvent({
     required this.roomId,
     required this.fileImage,
+    required this.fileExtension,
     required this.userInfo,
   });
 }

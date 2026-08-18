@@ -1,6 +1,6 @@
-import 'dart:io';
+import 'dart:typed_data';
 
-import 'package:chat_app/features/auth/data/models/user_model.dart';
+import 'package:chat_app/features/auth/domain/entities/user_entity.dart';
 import 'package:chat_app/features/chat/data/models/chat_room_model.dart';
 import 'package:chat_app/features/chat/data/models/message_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -11,17 +11,18 @@ import 'package:uuid/uuid.dart';
 import '../../../../core/utils/services/notification_services.dart';
 
 abstract class ChatRemoteDataSource {
-  Future<void> createRoom(String email);
+  Future<void> createRoom({required String email});
   Future<void> sendMessage({
     required String message,
     required String roomId,
     required String? type,
-    required UserModel userInfo,
+    required UserEntity userInfo,
   });
   Future<void> sendImage({
     required String roomId,
-    required File imageFile,
-    required UserModel userInfo,
+    required Uint8List imageFile,
+    required String fileExtension,
+    required UserEntity userInfo,
   });
   Future<void> readMessage({
     required String roomId,
@@ -38,7 +39,7 @@ class ChatRemoteDataSourceImp extends ChatRemoteDataSource {
   final String myUid = FirebaseAuth.instance.currentUser!.uid;
 
   @override
-  Future<void> createRoom(String email) async {
+  Future<void> createRoom({required String email}) async {
     QuerySnapshot userEmail = await firebaseFirestore
         .collection('users')
         .where('email', isEqualTo: email)
@@ -74,7 +75,7 @@ class ChatRemoteDataSourceImp extends ChatRemoteDataSource {
     required String message,
     required String roomId,
     required String? type,
-    required UserModel userInfo,
+    required UserEntity userInfo,
   }) async {
     String messageId = const Uuid().v1();
     MessageModel messageInfo = MessageModel(
@@ -98,42 +99,38 @@ class ChatRemoteDataSourceImp extends ChatRemoteDataSource {
         'last_message_time': DateTime.now().millisecondsSinceEpoch.toString()
       },
     );
-    NotificationServices().sendNotification(
-      body: message,
-      title: FirebaseAuth.instance.currentUser!.displayName ?? '',
-      deviceToken: userInfo.pushToken!,
-    );
+    if (userInfo.pushToken != null && userInfo.pushToken!.isNotEmpty) {
+      NotificationServices().sendNotification(
+        body: message,
+        title: FirebaseAuth.instance.currentUser!.displayName ?? '',
+        deviceToken: userInfo.pushToken!,
+      );
+    }
   }
 
   @override
   Future<void> sendImage({
     required String roomId,
-    required File imageFile,
-    required UserModel userInfo,
+    required String fileExtension,
+    required Uint8List imageFile,
+    required UserEntity userInfo,
   }) async {
-    try {
-      String ext = imageFile.path.split('.').last.split('/').last.toLowerCase();
-      final cleanRoomId = roomId.replaceAll(RegExp(r'[\[\], ]'), '');
-      final filePath =
-          '$cleanRoomId/${DateTime.now().millisecondsSinceEpoch}.$ext';
+    final cleanRoomId = roomId.replaceAll(RegExp(r'[\[\], ]'), '');
+    final filePath =
+        '$cleanRoomId/${DateTime.now().millisecondsSinceEpoch}.$fileExtension';
 
-      await Supabase.instance.client.storage
-          .from('images')
-          .upload(filePath, imageFile);
+    await Supabase.instance.client.storage
+        .from('images')
+        .uploadBinary(filePath, imageFile);
 
-      String imageUrl = Supabase.instance.client.storage
-          .from('images')
-          .getPublicUrl(filePath);
-      sendMessage(
-        message: imageUrl,
-        roomId: roomId,
-        type: 'image',
-        userInfo: userInfo,
-      );
-    } catch (e) {
-      print("Upload error: $e");
-      return null;
-    }
+    String imageUrl =
+        Supabase.instance.client.storage.from('images').getPublicUrl(filePath);
+    sendMessage(
+      message: imageUrl,
+      roomId: roomId,
+      type: 'image',
+      userInfo: userInfo,
+    );
   }
 
   @override

@@ -1,25 +1,29 @@
-import 'dart:io';
+import 'dart:typed_data';
 
-import '../../../auth/data/models/user_model.dart';
+import 'package:dartz/dartz.dart';
+
+import '../../../../core/error/failure.dart';
+import '../../../auth/domain/entities/user_entity.dart';
 
 abstract class ChatRepository {
-  Future<void> createChatRoom(String email);
-  Future<void> sendMessage({
+  Future<Either<Failure, void>> createChatRoom({required String email});
+  Future<Either<Failure, void>> sendMessage({
     required String message,
     required String roomId,
     required String? type,
-    required UserModel userInfo,
+    required UserEntity userInfo,
   });
-  Future<void> sendImage({
+  Future<Either<Failure, void>> sendImage({
     required String roomId,
-    required File imageFile,
-    required UserModel userInfo,
+    required Uint8List imageFile,
+    required String fileExtension,
+    required UserEntity userInfo,
   });
-  Future<void> readMessage({
+  Future<Either<Failure, void>> readMessage({
     required String roomId,
     required String messageId,
   });
-  Future<void> deleteMessage({
+  Future<Either<Failure, void>> deleteMessage({
     required String roomId,
     required List<String> messageIds,
   });

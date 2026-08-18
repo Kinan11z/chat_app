@@ -1,23 +1,36 @@
 import 'package:chat_app/features/chat/domain/repositories/chat_repository.dart';
+import 'package:dartz/dartz.dart';
 
-import '../../../auth/data/models/user_model.dart';
+import '../../../../core/error/failure.dart';
+import '../../../../core/usecases/usecase.dart';
+import '../../../auth/domain/entities/user_entity.dart';
 
-class SendMessageUseCase {
+class SendChatMessageParams {
+  final String message;
+  final String roomId;
+  final String? type;
+  final UserEntity userInfo;
+
+  const SendChatMessageParams({
+    required this.message,
+    required this.roomId,
+    required this.type,
+    required this.userInfo,
+  });
+}
+
+class SendMessageUseCase extends UseCase<void, SendChatMessageParams> {
   final ChatRepository repository;
 
   SendMessageUseCase({required this.repository});
 
-  Future<void> call({
-    required String message,
-    required String roomId,
-    required String? type,
-    required UserModel userInfo,
-  }) async {
-    await repository.sendMessage(
-      message: message,
-      roomId: roomId,
-      type: type,
-      userInfo: userInfo,
+  @override
+  Future<Either<Failure, void>> call(SendChatMessageParams params) async {
+    return await repository.sendMessage(
+      message: params.message,
+      roomId: params.roomId,
+      type: params.type,
+      userInfo: params.userInfo,
     );
   }
 }

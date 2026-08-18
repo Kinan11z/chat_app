@@ -22,14 +22,11 @@ class ChatMessageCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     bool isMe = messageInfo.fromId == FirebaseAuth.instance.currentUser?.uid;
-    return BlocProvider(
-      create: (context) => ChatMessageBloc(),
-      child: ChatMessageCardBody(
-        isMe: isMe,
-        messageInfo: messageInfo,
-        roomId: roomId,
-        isSelected: isSelected,
-      ),
+    return ChatMessageCardBody(
+      isMe: isMe,
+      messageInfo: messageInfo,
+      roomId: roomId,
+      isSelected: isSelected,
     );
   }
 }

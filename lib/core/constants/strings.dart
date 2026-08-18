@@ -3,6 +3,8 @@ class AppStrings {
   static const signUpSuccess = 'Account created successfully';
   static const resetSentSuccess = 'Reset email sent successfully';
   static const accountCreatedSuccess = 'Account created successfully';
+  static const readMessageSuccess = 'Read message successfully';
+  static const deleteMessageSuccess = 'Delete message successfully';
   static const activationUpdatedSuccess =
       'Activation status updated successfully';
   static const sendMessageSuccess = 'Send message successfully';

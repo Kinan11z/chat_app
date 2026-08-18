@@ -20,7 +20,8 @@ class ChatRoomModel {
   ) {
     return ChatRoomModel(
       id: json['id'] ?? '' as String?,
-      members: json['members'] ?? [] as List<String>?,
+      members:
+          json['members'] != null ? List<String>.from(json['members']) : null,
       lastMessage: json['last_message'] ?? '' as String?,
       lastMessageTime: json['last_message_time'] ?? '' as String?,
       createdAt: json['created_at'] ?? '' as String?,

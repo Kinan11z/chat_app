@@ -1,64 +1,104 @@
-import 'dart:io';
+import 'dart:typed_data';
 
+import 'package:chat_app/features/auth/domain/entities/user_entity.dart';
 import 'package:chat_app/features/chat/data/datasource/chat_remote_data_source.dart';
 import 'package:chat_app/features/chat/domain/repositories/chat_repository.dart';
+import 'package:dartz/dartz.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-import '../../../auth/data/models/user_model.dart';
+import '../../../../core/error/failure.dart';
 
-class ChatRepositoryImp extends ChatRepository {
+class ChatRepositoryImp implements ChatRepository {
   final ChatRemoteDataSource remoteDataSource;
 
   ChatRepositoryImp({required this.remoteDataSource});
   @override
-  Future<void> createChatRoom(String email) async {
-    return await remoteDataSource.createRoom(email);
+  Future<Either<Failure, void>> createChatRoom({required String email}) async {
+    try {
+      await remoteDataSource.createRoom(email: email);
+      return const Right(null);
+    } on FirebaseAuthException catch (e) {
+      return Left(AuthFailure(e.message ?? 'Create room failed'));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
   }
 
   @override
-  Future<void> sendMessage({
+  Future<Either<Failure, void>> sendMessage({
     required String message,
     required String roomId,
     required String? type,
-    required UserModel userInfo,
+    required UserEntity userInfo,
   }) async {
-    return await remoteDataSource.sendMessage(
-      message: message,
-      roomId: roomId,
-      type: type,
-      userInfo: userInfo,
-    );
+    try {
+      await remoteDataSource.sendMessage(
+        message: message,
+        roomId: roomId,
+        type: type,
+        userInfo: userInfo,
+      );
+      return const Right(null);
+    } on FirebaseAuthException catch (e) {
+      return Left(AuthFailure(e.message ?? 'Send message failed'));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
   }
 
   @override
-  Future<void> sendImage({
+  Future<Either<Failure, void>> sendImage({
     required String roomId,
-    required File imageFile,
-    required UserModel userInfo,
+    required Uint8List imageFile,
+    required String fileExtension,
+    required UserEntity userInfo,
   }) async {
-    return await remoteDataSource.sendImage(
-      roomId: roomId,
-      imageFile: imageFile,
-      userInfo: userInfo,
-    );
+    try {
+      await remoteDataSource.sendImage(
+        roomId: roomId,
+        imageFile: imageFile,
+        fileExtension: fileExtension,
+        userInfo: userInfo,
+      );
+      return const Right(null);
+    } on FirebaseAuthException catch (e) {
+      return Left(AuthFailure(e.message ?? 'Send image failed'));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
   }
 
   @override
-  Future<void> readMessage({
+  Future<Either<Failure, void>> readMessage({
     required String roomId,
     required String messageId,
   }) async {
-    return await remoteDataSource.readMessage(
-      messageId: messageId,
-      roomId: roomId,
-    );
+    try {
+      await remoteDataSource.readMessage(
+        messageId: messageId,
+        roomId: roomId,
+      );
+      return const Right(null);
+    } on FirebaseAuthException catch (e) {
+      return Left(AuthFailure(e.message ?? 'Read message failed'));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
   }
 
   @override
-  Future<void> deleteMessage(
+  Future<Either<Failure, void>> deleteMessage(
       {required String roomId, required List<String> messageIds}) async {
-    return await remoteDataSource.deleteMessage(
-      roomId: roomId,
-      messageIds: messageIds,
-    );
+    try {
+      await remoteDataSource.deleteMessage(
+        roomId: roomId,
+        messageIds: messageIds,
+      );
+      return const Right(null);
+    } on FirebaseAuthException catch (e) {
+      return Left(AuthFailure(e.message ?? 'Delete message failed'));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
   }
 }

@@ -28,8 +28,11 @@ class ChatGroupModel {
       id: json['id'] ?? '' as String?,
       name: json['name'] ?? '' as String?,
       image: json['image'] ?? '' as String?,
-      members: json['members'] ?? [] as List<String>?,
-      admins: json['admins_id'] ?? [] as List<String>?,
+      members:
+          json['members'] != null ? List<String>.from(json['members']) : null,
+      admins: json['admins_id'] != null
+          ? List<String>.from(json['admins_id'])
+          : null,
       lastMessage: json['last_message'] ?? '' as String?,
       lastMessageTime: json['last_message_time'] ?? '' as String?,
       createdAt: json['created_at'] ?? '' as String?,

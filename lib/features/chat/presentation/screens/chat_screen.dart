@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:chat_app/core/utils/helper_functions.dart';
-import 'package:chat_app/features/auth/data/models/user_model.dart';
+import 'package:chat_app/features/auth/domain/entities/user_entity.dart';
 import 'package:chat_app/features/chat/data/models/message_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:iconsax/iconsax.dart';
 
+import '../../../../core/di/injection.dart';
 import '../../../../core/utils/date_format.dart';
 import '../manager/chat_message/chat_message_bloc.dart';
 import '../widgets/chat_message_card.dart';
@@ -16,7 +17,7 @@ import '../widgets/chat_message_card.dart';
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key, required this.userInfo, required this.roomId});
 
-  final UserModel userInfo;
+  final UserEntity userInfo;
   final String roomId;
 
   @override
@@ -41,7 +42,7 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => ChatMessageBloc(),
+      create: (context) => getIt<ChatMessageBloc>(),
       child: ChatScreenBody(
         widget: widget,
         messageController: messageController,
@@ -79,7 +80,7 @@ class _ChatScreenBodyState extends State<ChatScreenBody> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              widget.widget.userInfo.name ?? '',
+              widget.widget.userInfo.name,
               style: Theme.of(context).textTheme.labelLarge,
             ),
             StreamBuilder(
@@ -277,11 +278,15 @@ class _ChatScreenBodyState extends State<ChatScreenBody> {
                               onPressed: () async {
                                 File? image = await HelperFunctions.pickImage();
                                 if (image != null) {
+                                  final bytes = await image.readAsBytes();
+
                                   context.read<ChatMessageBloc>().add(
                                         SendImageEvent(
                                           userInfo: widget.widget.userInfo,
                                           roomId: widget.widget.roomId,
-                                          fileImage: image,
+                                          fileImage: bytes,
+                                          fileExtension:
+                                              image.path.split('.').last,
                                         ),
                                       );
                                 }

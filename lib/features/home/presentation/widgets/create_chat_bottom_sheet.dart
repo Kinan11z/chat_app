@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:iconsax/iconsax.dart';
 
+import '../../../../core/di/injection.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/utils/widgets/app_button.dart';
 import '../../../../core/utils/widgets/app_text_field.dart';
@@ -34,7 +35,7 @@ class _CreateChatBottomSheetState extends State<CreateChatBottomSheet> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => ChatRoomBloc(),
+      create: (context) => getIt<ChatRoomBloc>(),
       child: BlocListener<ChatRoomBloc, ChatRoomState>(
         listener: (context, state) {
           if (state is ChatRoomSuccess) {
