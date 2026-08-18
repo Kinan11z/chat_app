@@ -1,3 +1,4 @@
+import 'package:chat_app/core/di/injection.dart';
 import 'package:chat_app/core/utils/validators.dart';
 import 'package:chat_app/core/utils/widgets/app_text_field.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -36,7 +37,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => GroupBloc(),
+      create: (context) => getIt<GroupBloc>(),
       child: BlocConsumer<GroupBloc, GroupState>(
         listener: (context, state) {
           if (state is GroupSuccess) {

@@ -1,5 +1,5 @@
-import 'package:chat_app/features/group/data/models/chat_group_model.dart';
 import 'package:flutter/material.dart';
+import '../../../group/domain/entities/chat_group_entity.dart';
 import '../../../group/presentation/screens/group_screen.dart';
 
 class GroupCard extends StatelessWidget {
@@ -7,7 +7,7 @@ class GroupCard extends StatelessWidget {
     super.key,
     required this.groupInfo,
   });
-  final ChatGroupModel groupInfo;
+  final ChatGroupEntity groupInfo;
   @override
   Widget build(BuildContext context) {
     return GestureDetector(

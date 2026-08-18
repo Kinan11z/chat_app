@@ -1,17 +1,29 @@
+import 'package:chat_app/core/usecases/usecase.dart';
+import 'package:dartz/dartz.dart';
+
+import '../../../../core/error/failure.dart';
 import '../repositories/group_repository.dart';
 
-class PromoteMemberUseCase {
+class PromoteMemberParams {
+  final String groupId;
+  final String memberId;
+
+  PromoteMemberParams({
+    required this.groupId,
+    required this.memberId,
+  });
+}
+
+class PromoteMemberUseCase extends UseCase<void, PromoteMemberParams> {
   final GroupRepository repository;
 
   PromoteMemberUseCase({required this.repository});
 
-  Future<void> call({
-    required String groupId,
-    required String memberId,
-  }) async {
-    await repository.promoteMember(
-      groupId: groupId,
-      memberId: memberId,
+  @override
+  Future<Either<Failure, void>> call(PromoteMemberParams params) async {
+    return await repository.promoteMember(
+      groupId: params.groupId,
+      memberId: params.memberId,
     );
   }
 }

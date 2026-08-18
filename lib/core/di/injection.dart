@@ -19,6 +19,18 @@ import '../../features/chat/domain/usecases/send_image_use_case.dart';
 import '../../features/chat/domain/usecases/send_message_use_case.dart';
 import '../../features/chat/presentation/manager/chat_message/chat_message_bloc.dart';
 import '../../features/chat/presentation/manager/chat_room/chat_room_bloc.dart';
+import '../../features/group/data/datasource/group_remote_data_source.dart';
+import '../../features/group/data/repositories/group_repository_imp.dart';
+import '../../features/group/domain/repositories/group_repository.dart';
+import '../../features/group/domain/usecases/create_group_use_case.dart';
+import '../../features/group/domain/usecases/edit_group_use_case.dart';
+import '../../features/group/domain/usecases/promote_member_use_case.dart';
+import '../../features/group/domain/usecases/remove_member_use_case.dart';
+import '../../features/group/domain/usecases/remove_promote_use_case.dart';
+import '../../features/group/domain/usecases/send_group_image_use_case.dart';
+import '../../features/group/domain/usecases/send_group_message_use_case.dart';
+import '../../features/group/presentation/manager/chat_group_message/chat_group_message_bloc.dart';
+import '../../features/group/presentation/manager/group/group_bloc.dart';
 
 final GetIt getIt = GetIt.instance;
 
@@ -26,13 +38,17 @@ Future<void> init() async {
   // datasources
   getIt.registerLazySingleton<AuthRemoteDataSource>(
       () => AuthRemoteDataSourceImp());
-  getIt.registerLazySingleton<ChatRepository>(
-      () => ChatRepositoryImp(remoteDataSource: getIt()));
+  getIt.registerLazySingleton<ChatRemoteDataSource>(
+      () => ChatRemoteDataSourceImp());
+  getIt.registerLazySingleton<GroupRemoteDataSource>(
+      () => GroupRemoteDataSourceImp());
   // repositories
   getIt.registerLazySingleton<AuthRepository>(
       () => AuthRepositoryImpl(remoteDataSource: getIt()));
-  getIt.registerLazySingleton<ChatRemoteDataSource>(
-      () => ChatRemoteDataSourceImp());
+  getIt.registerLazySingleton<ChatRepository>(
+      () => ChatRepositoryImp(remoteDataSource: getIt()));
+  getIt.registerLazySingleton<GroupRepository>(
+      () => GroupRepositoryImp(remoteDataSource: getIt()));
   // usecases
   getIt.registerLazySingleton(() => SignInUsecase(repository: getIt()));
   getIt.registerLazySingleton(() => SignUpUsecase(repository: getIt()));
@@ -44,6 +60,14 @@ Future<void> init() async {
   getIt.registerLazySingleton(() => SendImageUseCase(repository: getIt()));
   getIt.registerLazySingleton(() => ReadMessageUseCase(repository: getIt()));
   getIt.registerLazySingleton(() => DeleteMessageUseCase(repository: getIt()));
+  getIt.registerLazySingleton(() => CreateGroupUseCase(repository: getIt()));
+  getIt.registerLazySingleton(() => EditGroupUseCase(repository: getIt()));
+  getIt.registerLazySingleton(() => PromoteMemberUseCase(repository: getIt()));
+  getIt.registerLazySingleton(() => RemoveMemberUseCase(repository: getIt()));
+  getIt.registerLazySingleton(() => RemovePromoteUseCase(repository: getIt()));
+  getIt.registerLazySingleton(() => SendGroupImageUseCase(repository: getIt()));
+  getIt.registerLazySingleton(
+      () => SendGroupMessageUseCase(repository: getIt()));
   // blocs
   getIt.registerFactory(() => AuthBloc(
         signInUsecase: getIt(),
@@ -60,5 +84,16 @@ Future<void> init() async {
       ));
   getIt.registerFactory(() => ChatRoomBloc(
         chatRoomUseCase: getIt(),
+      ));
+  getIt.registerFactory(() => GroupBloc(
+        createGroupUseCase: getIt(),
+        editGroupUseCase: getIt(),
+        promoteMemberUseCase: getIt(),
+        removeMemberUseCase: getIt(),
+        removePromoteUseCase: getIt(),
+      ));
+  getIt.registerFactory(() => ChatGroupMessageBloc(
+        sendGroupImageUseCase: getIt(),
+        sendGroupMessageUseCase: getIt(),
       ));
 }

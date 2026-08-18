@@ -5,7 +5,7 @@ sealed class ChatGroupMessageEvent {}
 
 class SendMessageGroupEvent extends ChatGroupMessageEvent {
   final String message;
-  final ChatGroupModel groupInfo;
+  final ChatGroupEntity groupInfo;
   final String? type;
   SendMessageGroupEvent({
     required this.message,
@@ -15,10 +15,12 @@ class SendMessageGroupEvent extends ChatGroupMessageEvent {
 }
 
 class SendImageGroupEvent extends ChatGroupMessageEvent {
-  final File imageFile;
-  final ChatGroupModel groupInfo;
+  final Uint8List imageFile;
+  final String fileExtension;
+  final ChatGroupEntity groupInfo;
   SendImageGroupEvent({
     required this.imageFile,
     required this.groupInfo,
+    required this.fileExtension,
   });
 }

@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:chat_app/features/group/data/models/chat_group_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -9,6 +9,7 @@ import 'package:uuid/uuid.dart';
 import '../../../../core/utils/services/notification_services.dart';
 import '../../../auth/data/models/user_model.dart';
 import '../../../chat/data/models/message_model.dart';
+import '../../domain/entities/chat_group_entity.dart';
 
 abstract class GroupRemoteDataSource {
   Future createGroup({
@@ -22,12 +23,13 @@ abstract class GroupRemoteDataSource {
   });
   Future sendGroupMessage({
     required String message,
-    required ChatGroupModel groupInfo,
+    required ChatGroupEntity groupInfo,
     required String? type,
   });
   Future<void> sendImage({
-    required File imageFile,
-    required ChatGroupModel groupInfo,
+    required Uint8List imageFile,
+    required ChatGroupEntity groupInfo,
+    required String fileExtension,
   });
   Future removeMember({
     required String memberId,
@@ -72,13 +74,13 @@ class GroupRemoteDataSourceImp extends GroupRemoteDataSource {
   Future<void> sendGroupMessage({
     required String message,
     required String? type,
-    required ChatGroupModel groupInfo,
+    required ChatGroupEntity groupInfo,
   }) async {
     List members = groupInfo.members ?? [];
     members.remove(myUid);
     List<UserModel> users = [];
 
-    firebaseFirestore
+    await firebaseFirestore
         .collection('users')
         .where('id', whereIn: members)
         .get()
@@ -122,31 +124,25 @@ class GroupRemoteDataSourceImp extends GroupRemoteDataSource {
 
   @override
   Future<void> sendImage({
-    required File imageFile,
-    required ChatGroupModel groupInfo,
+    required Uint8List imageFile,
+    required ChatGroupEntity groupInfo,
+    required String fileExtension,
   }) async {
-    try {
-      String ext = imageFile.path.split('.').last.split('/').last.toLowerCase();
-      final cleanGroupId = groupInfo.id?.replaceAll(RegExp(r'[\[\], ]'), '');
-      final filePath =
-          '$cleanGroupId/${DateTime.now().millisecondsSinceEpoch}.$ext';
+    final cleanGroupId = groupInfo.id.replaceAll(RegExp(r'[\[\], ]'), '');
+    final filePath =
+        '$cleanGroupId/${DateTime.now().millisecondsSinceEpoch}.$fileExtension';
 
-      await Supabase.instance.client.storage
-          .from('images')
-          .upload(filePath, imageFile);
+    await Supabase.instance.client.storage
+        .from('images')
+        .uploadBinary(filePath, imageFile);
 
-      String imageUrl = Supabase.instance.client.storage
-          .from('images')
-          .getPublicUrl(filePath);
-      sendGroupMessage(
-        message: imageUrl,
-        groupInfo: groupInfo,
-        type: 'image',
-      );
-    } catch (e) {
-      print("Upload error: $e");
-      return null;
-    }
+    String imageUrl =
+        Supabase.instance.client.storage.from('images').getPublicUrl(filePath);
+    sendGroupMessage(
+      message: imageUrl,
+      groupInfo: groupInfo,
+      type: 'image',
+    );
   }
 
   @override

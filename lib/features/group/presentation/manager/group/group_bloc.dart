@@ -1,10 +1,9 @@
 import 'package:bloc/bloc.dart';
+import 'package:chat_app/core/constants/strings.dart';
 import 'package:meta/meta.dart';
 
-import '../../../data/datasource/group_remote_data_source.dart';
-import '../../../data/repositories/group_repository_imp.dart';
+import '../../../domain/usecases/create_group_use_case.dart';
 import '../../../domain/usecases/edit_group_use_case.dart';
-import '../../../domain/usecases/group_use_case.dart';
 import '../../../domain/usecases/promote_member_use_case.dart';
 import '../../../domain/usecases/remove_member_use_case.dart';
 import '../../../domain/usecases/remove_promote_use_case.dart';
@@ -13,103 +12,109 @@ part 'group_event.dart';
 part 'group_state.dart';
 
 class GroupBloc extends Bloc<GroupEvent, GroupState> {
-  GroupBloc() : super(GroupInitial()) {
+  final CreateGroupUseCase createGroupUseCase;
+  final EditGroupUseCase editGroupUseCase;
+  final RemoveMemberUseCase removeMemberUseCase;
+  final RemovePromoteUseCase removePromoteUseCase;
+  final PromoteMemberUseCase promoteMemberUseCase;
+
+  GroupBloc({
+    required this.createGroupUseCase,
+    required this.editGroupUseCase,
+    required this.removeMemberUseCase,
+    required this.removePromoteUseCase,
+    required this.promoteMemberUseCase,
+  }) : super(GroupInitial()) {
     on<CreateGroupEvent>(_createGroup);
     on<EditGroupEvent>(_editGroup);
     on<RemoveMemberEvent>(_removeMember);
     on<RemovePromoteEvent>(_removePromote);
-    on<PromoteMemberEvent>(_PromoteMember);
+    on<PromoteMemberEvent>(_promoteMember);
   }
+
   Future<void> _createGroup(
-      CreateGroupEvent event, Emitter<GroupState> emit) async {
+    CreateGroupEvent event,
+    Emitter<GroupState> emit,
+  ) async {
     emit(GroupLoadding());
-    try {
-      final usecase = GroupUseCase(
-        repository: GroupRepositoryImp(
-          remoteDataSource: GroupRemoteDataSourceImp(),
-        ),
-      );
-      await usecase.call(name: event.name, members: event.members);
-      emit(GroupSuccess(message: 'Group Created Succsfully'));
-    } catch (e) {
-      emit(GroupError(message: e.toString()));
-    }
+    final result = await createGroupUseCase(
+      CreateGroupParams(
+        name: event.name,
+        members: event.members,
+      ),
+    );
+    result.fold(
+      (failure) => emit(GroupError(message: failure.message)),
+      (_) => emit(GroupSuccess(message: AppStrings.createGroupSuccess)),
+    );
   }
 
   Future<void> _editGroup(
-      EditGroupEvent event, Emitter<GroupState> emit) async {
+    EditGroupEvent event,
+    Emitter<GroupState> emit,
+  ) async {
     emit(GroupLoadding());
-    try {
-      final usecase = EditGroupUseCase(
-        repository: GroupRepositoryImp(
-          remoteDataSource: GroupRemoteDataSourceImp(),
-        ),
-      );
-      await usecase.call(
+    final result = await editGroupUseCase(
+      EditGroupParams(
         groupId: event.groupId,
         name: event.name,
         members: event.members,
-      );
-      emit(GroupSuccess(message: 'Group Edited Successfully'));
-    } catch (e) {
-      emit(GroupError(message: e.toString()));
-    }
+      ),
+    );
+    result.fold(
+      (failure) => emit(GroupError(message: failure.message)),
+      (_) => emit(GroupSuccess(message: AppStrings.editGroupSuccess)),
+    );
   }
 
   Future<void> _removeMember(
-      RemoveMemberEvent event, Emitter<GroupState> emit) async {
+    RemoveMemberEvent event,
+    Emitter<GroupState> emit,
+  ) async {
     emit(GroupLoadding());
-    try {
-      final usecase = RemoveMemberUseCase(
-        repository: GroupRepositoryImp(
-          remoteDataSource: GroupRemoteDataSourceImp(),
-        ),
-      );
-      await usecase.call(
-        memberId: event.memberId,
+    final result = await removeMemberUseCase(
+      RemoveMemberParams(
         groupId: event.groupId,
-      );
-      emit(GroupSuccess(message: 'Member Removed Successfully'));
-    } catch (e) {
-      emit(GroupError(message: e.toString()));
-    }
+        memberId: event.memberId,
+      ),
+    );
+    result.fold(
+      (failure) => emit(GroupError(message: failure.message)),
+      (_) => emit(GroupSuccess(message: AppStrings.removeMemberSuccess)),
+    );
   }
 
   Future<void> _removePromote(
-      RemovePromoteEvent event, Emitter<GroupState> emit) async {
+    RemovePromoteEvent event,
+    Emitter<GroupState> emit,
+  ) async {
     emit(GroupLoadding());
-    try {
-      final usecase = RemovePromoteUseCase(
-        repository: GroupRepositoryImp(
-          remoteDataSource: GroupRemoteDataSourceImp(),
-        ),
-      );
-      await usecase.call(
-        memberId: event.memberId,
+    final result = await removePromoteUseCase(
+      RemovePromoteParams(
         groupId: event.groupId,
-      );
-      emit(GroupSuccess(message: 'Member Removed Successfully'));
-    } catch (e) {
-      emit(GroupError(message: e.toString()));
-    }
+        memberId: event.memberId,
+      ),
+    );
+    result.fold(
+      (failure) => emit(GroupError(message: failure.message)),
+      (_) => emit(GroupSuccess(message: AppStrings.removePromoteSuccess)),
+    );
   }
 
-  Future<void> _PromoteMember(
-      PromoteMemberEvent event, Emitter<GroupState> emit) async {
+  Future<void> _promoteMember(
+    PromoteMemberEvent event,
+    Emitter<GroupState> emit,
+  ) async {
     emit(GroupLoadding());
-    try {
-      final usecase = PromoteMemberUseCase(
-        repository: GroupRepositoryImp(
-          remoteDataSource: GroupRemoteDataSourceImp(),
-        ),
-      );
-      await usecase.call(
-        memberId: event.memberId,
+    final result = await promoteMemberUseCase(
+      PromoteMemberParams(
         groupId: event.groupId,
-      );
-      emit(GroupSuccess(message: 'Member Promoted Successfully'));
-    } catch (e) {
-      emit(GroupError(message: e.toString()));
-    }
+        memberId: event.memberId,
+      ),
+    );
+    result.fold(
+      (failure) => emit(GroupError(message: failure.message)),
+      (_) => emit(GroupSuccess(message: AppStrings.promoteMemberSuccess)),
+    );
   }
 }

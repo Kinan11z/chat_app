@@ -1,82 +1,140 @@
-import 'dart:io';
+import 'dart:typed_data';
 
+import 'package:chat_app/core/constants/strings.dart';
 import 'package:chat_app/features/group/data/datasource/group_remote_data_source.dart';
+import 'package:dartz/dartz.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
+import '../../../../core/error/failure.dart';
+import '../../domain/entities/chat_group_entity.dart';
 import '../../domain/repositories/group_repository.dart';
-import '../models/chat_group_model.dart';
 
-class GroupRepositoryImp extends GroupRepository {
+class GroupRepositoryImp implements GroupRepository {
   final GroupRemoteDataSource remoteDataSource;
 
   GroupRepositoryImp({required this.remoteDataSource});
   @override
-  Future createGroup({
+  Future<Either<Failure, void>> createGroup({
     required String name,
     required List<String> members,
-  }) {
-    return remoteDataSource.createGroup(
-      name: name,
-      members: members,
-    );
+  }) async {
+    try {
+      await remoteDataSource.createGroup(
+        name: name,
+        members: members,
+      );
+      return const Right(null);
+    } on FirebaseAuthException catch (e) {
+      return Left(AuthFailure(e.message ?? 'Create group failed'));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
   }
 
   @override
-  Future sendGroupMessage({
+  Future<Either<Failure, void>> sendGroupMessage({
     required String message,
-    required ChatGroupModel groupInfo,
+    required ChatGroupEntity groupInfo,
     required String? type,
-  }) {
-    return remoteDataSource.sendGroupMessage(
-      message: message,
-      groupInfo: groupInfo,
-      type: type,
-    );
+  }) async {
+    try {
+      await remoteDataSource.sendGroupMessage(
+        message: message,
+        groupInfo: groupInfo,
+        type: type,
+      );
+      return const Right(null);
+    } on FirebaseAuthException catch (e) {
+      return Left(AuthFailure(e.message ?? 'Send message failed'));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
   }
 
   @override
-  Future sendImage({
-    required File imageFile,
-    required ChatGroupModel groupInfo,
-  }) {
-    return remoteDataSource.sendImage(
-      imageFile: imageFile,
-      groupInfo: groupInfo,
-    );
+  Future<Either<Failure, void>> sendImage({
+    required ChatGroupEntity groupInfo,
+    required Uint8List imageFile,
+    required String fileExtension,
+  }) async {
+    try {
+      await remoteDataSource.sendImage(
+        imageFile: imageFile,
+        groupInfo: groupInfo,
+        fileExtension: fileExtension,
+      );
+      return const Right(null);
+    } on FirebaseAuthException catch (e) {
+      return Left(AuthFailure(e.message ?? AppStrings.sendImageFailed));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
   }
 
   @override
-  Future editGroup(
+  Future<Either<Failure, void>> editGroup(
       {required String groupId,
       required String name,
-      required List<String> members}) {
-    return remoteDataSource.editGroup(
-      groupId: groupId,
-      name: name,
-      members: members,
-    );
+      required List<String> members}) async {
+    try {
+      await remoteDataSource.editGroup(
+        groupId: groupId,
+        name: name,
+        members: members,
+      );
+      return const Right(null);
+    } on FirebaseAuthException catch (e) {
+      return Left(AuthFailure(e.message ?? AppStrings.editGroupFailed));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
   }
 
   @override
-  Future removeMember({required String memberId, required String groupId}) {
-    return remoteDataSource.removeMember(
-      memberId: memberId,
-      groupId: groupId,
-    );
+  Future<Either<Failure, void>> removeMember(
+      {required String memberId, required String groupId}) async {
+    try {
+      await remoteDataSource.removeMember(
+        memberId: memberId,
+        groupId: groupId,
+      );
+      return const Right(null);
+    } on FirebaseAuthException catch (e) {
+      return Left(AuthFailure(e.message ?? AppStrings.removeMemberFailed));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
   }
 
   @override
-  Future promoteMember({required String memberId, required String groupId}) {
-    return remoteDataSource.promoteMember(
-      memberId: memberId,
-      groupId: groupId,
-    );
+  Future<Either<Failure, void>> promoteMember(
+      {required String memberId, required String groupId}) async {
+    try {
+      await remoteDataSource.promoteMember(
+        memberId: memberId,
+        groupId: groupId,
+      );
+      return const Right(null);
+    } on FirebaseAuthException catch (e) {
+      return Left(AuthFailure(e.message ?? AppStrings.memberPromotedFailed));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
   }
 
   @override
-  Future removePromote({required String memberId, required String groupId}) {
-    return remoteDataSource.removePromote(
-      memberId: memberId,
-      groupId: groupId,
-    );
+  Future<Either<Failure, void>> removePromote(
+      {required String memberId, required String groupId}) async {
+    try {
+      await remoteDataSource.removePromote(
+        memberId: memberId,
+        groupId: groupId,
+      );
+      return const Right(null);
+    } on FirebaseAuthException catch (e) {
+      return Left(AuthFailure(e.message ?? AppStrings.removePromoteFailed));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
   }
 }

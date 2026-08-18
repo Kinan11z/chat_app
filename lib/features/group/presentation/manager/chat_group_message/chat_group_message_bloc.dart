@@ -1,11 +1,10 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:bloc/bloc.dart';
 import 'package:meta/meta.dart';
 
-import '../../../data/datasource/group_remote_data_source.dart';
-import '../../../data/models/chat_group_model.dart';
-import '../../../data/repositories/group_repository_imp.dart';
+import '../../../../../core/constants/strings.dart';
+import '../../../domain/entities/chat_group_entity.dart';
 import '../../../domain/usecases/send_group_image_use_case.dart';
 import '../../../domain/usecases/send_group_message_use_case.dart';
 
@@ -14,46 +13,52 @@ part 'chat_group_message_state.dart';
 
 class ChatGroupMessageBloc
     extends Bloc<ChatGroupMessageEvent, ChatGroupMessageState> {
-  ChatGroupMessageBloc() : super(ChatGroupMessageInitial()) {
+  final SendGroupMessageUseCase sendGroupMessageUseCase;
+  final SendGroupImageUseCase sendGroupImageUseCase;
+
+  ChatGroupMessageBloc({
+    required this.sendGroupMessageUseCase,
+    required this.sendGroupImageUseCase,
+  }) : super(ChatGroupMessageInitial()) {
     on<SendMessageGroupEvent>(_sendGroupMessage);
     on<SendImageGroupEvent>(_sendGroupImage);
   }
+
   Future<void> _sendGroupMessage(
-      SendMessageGroupEvent event, Emitter<ChatGroupMessageState> emit) async {
+    SendMessageGroupEvent event,
+    Emitter<ChatGroupMessageState> emit,
+  ) async {
     emit(ChatGroupMessageLoadding());
-    try {
-      final usecase = SendGroupMessageUseCase(
-        repository: GroupRepositoryImp(
-          remoteDataSource: GroupRemoteDataSourceImp(),
-        ),
-      );
-      await usecase.call(
-        groupInfo: event.groupInfo,
+    final result = await sendGroupMessageUseCase(
+      SendGroupMessageParams(
         message: event.message,
+        groupInfo: event.groupInfo,
         type: event.type,
-      );
-      emit(ChatGroupMessageSuccess(message: 'Send Message Succsfully'));
-    } catch (e) {
-      emit(ChatGroupMessageError(message: e.toString()));
-    }
+      ),
+    );
+    result.fold(
+      (failure) => emit(ChatGroupMessageError(message: failure.message)),
+      (_) => emit(
+          ChatGroupMessageSuccess(message: AppStrings.sendGroupMessageSuccess)),
+    );
   }
 
   Future<void> _sendGroupImage(
-      SendImageGroupEvent event, Emitter<ChatGroupMessageState> emit) async {
+    SendImageGroupEvent event,
+    Emitter<ChatGroupMessageState> emit,
+  ) async {
     emit(ChatGroupMessageLoadding());
-    try {
-      final usecase = SendGroupImageUseCase(
-        repository: GroupRepositoryImp(
-          remoteDataSource: GroupRemoteDataSourceImp(),
-        ),
-      );
-      await usecase.call(
-        groupInfo: event.groupInfo,
+    final result = await sendGroupImageUseCase(
+      SendGroupImageParams(
         imageFile: event.imageFile,
-      );
-      emit(ChatGroupMessageSuccess(message: 'Send Image Succsfully'));
-    } catch (e) {
-      emit(ChatGroupMessageError(message: e.toString()));
-    }
+        groupInfo: event.groupInfo,
+        fileExtension: event.fileExtension,
+      ),
+    );
+    result.fold(
+      (failure) => emit(ChatGroupMessageError(message: failure.message)),
+      (_) => emit(
+          ChatGroupMessageSuccess(message: AppStrings.sendGroupImageSuccess)),
+    );
   }
 }

@@ -1,3 +1,4 @@
+import 'package:chat_app/core/di/injection.dart';
 import 'package:chat_app/core/utils/widgets/app_text_field.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -7,14 +8,14 @@ import 'package:iconsax/iconsax.dart';
 
 import '../../../../core/utils/validators.dart';
 import '../../../auth/data/models/user_model.dart';
-import '../../data/models/chat_group_model.dart';
+import '../../domain/entities/chat_group_entity.dart';
 import '../manager/group/group_bloc.dart';
 import 'group_member_screen.dart';
 
 class EditGroupScreen extends StatefulWidget {
   const EditGroupScreen({super.key, required this.groupInfo});
 
-  final ChatGroupModel groupInfo;
+  final ChatGroupEntity groupInfo;
   @override
   State<EditGroupScreen> createState() => _EditGroupScreenState();
 }
@@ -38,7 +39,7 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
     bool isAdmin = widget.groupInfo.admins!
         .contains(FirebaseAuth.instance.currentUser!.uid);
     return BlocProvider(
-      create: (context) => GroupBloc(),
+      create: (context) => getIt<GroupBloc>(),
       child: BlocConsumer<GroupBloc, GroupState>(
         listener: (context, state) {
           if (state is GroupSuccess) {

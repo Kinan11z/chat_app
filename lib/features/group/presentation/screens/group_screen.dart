@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:chat_app/features/group/data/models/chat_group_model.dart';
+import 'package:chat_app/core/di/injection.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +9,7 @@ import 'package:iconsax/iconsax.dart';
 
 import '../../../../core/utils/helper_functions.dart';
 import '../../data/models/group_message_model.dart';
+import '../../domain/entities/chat_group_entity.dart';
 import '../manager/chat_group_message/chat_group_message_bloc.dart';
 import '../widgets/group_message_card.dart';
 import 'edit_group_screen.dart';
@@ -16,7 +17,7 @@ import 'edit_group_screen.dart';
 class GroupScreen extends StatefulWidget {
   const GroupScreen({super.key, required this.groupInfo});
 
-  final ChatGroupModel groupInfo;
+  final ChatGroupEntity groupInfo;
   @override
   State<GroupScreen> createState() => _GroupScreenState();
 }
@@ -39,7 +40,7 @@ class _GroupScreenState extends State<GroupScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => ChatGroupMessageBloc(),
+      create: (context) => getIt<ChatGroupMessageBloc>(),
       child: BlocConsumer<ChatGroupMessageBloc, ChatGroupMessageState>(
         listener: (context, state) {
           if (state is ChatGroupMessageSuccess) {
@@ -163,14 +164,17 @@ class _GroupScreenState extends State<GroupScreen> {
                                       File? image =
                                           await HelperFunctions.pickImage();
                                       if (image != null) {
-                                        BlocProvider.of<ChatGroupMessageBloc>(
-                                                context)
+                                        final bytes = await image.readAsBytes();
+                                        context
+                                            .read<ChatGroupMessageBloc>()
                                             .add(
-                                          SendImageGroupEvent(
-                                            imageFile: image,
-                                            groupInfo: widget.groupInfo,
-                                          ),
-                                        );
+                                              SendImageGroupEvent(
+                                                imageFile: bytes,
+                                                groupInfo: widget.groupInfo,
+                                                fileExtension:
+                                                    image.path.split('.').last,
+                                              ),
+                                            );
                                       }
                                     },
                                     icon: const Icon(Iconsax.camera),

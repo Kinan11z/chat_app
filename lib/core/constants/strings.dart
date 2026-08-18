@@ -16,4 +16,19 @@ class AppStrings {
   static const memberPromotedSuccess = 'Member promoted successfully';
   static const addContactSuccess = 'Add contact successfully';
   static const profileUpdatedSuccess = 'Profile updated successfully';
+  static const removePromoteFailed = 'Remove promote failed';
+  static const memberPromotedFailed = 'Promote member failed';
+  static const removeMemberFailed = 'Remove member failed';
+  static const editGroupFailed = 'Edit group failed';
+  static const sendImageFailed = 'Send image failed';
+  static const String createGroupSuccess = 'Group created successfully.';
+  static const String editGroupSuccess = 'Group updated successfully.';
+  static const String removeMemberSuccess = 'Member removed successfully.';
+  static const String removePromoteSuccess =
+      'Admin privilege removed successfully.';
+  static const String promoteMemberSuccess =
+      'Member promoted to admin successfully.';
+  static const String sendGroupMessageSuccess =
+      'Group message sent successfully.';
+  static const String sendGroupImageSuccess = 'Group image sent successfully.';
 }

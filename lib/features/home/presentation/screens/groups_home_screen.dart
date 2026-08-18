@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 
+import '../../../group/domain/entities/chat_group_entity.dart';
 import '../../../group/presentation/screens/create_group_screen.dart';
 import '../widgets/group_card.dart';
 
@@ -41,11 +42,11 @@ class GroupsHomeScreen extends StatelessWidget {
                   .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.hasData) {
-                  List<ChatGroupModel> myGroups = snapshot.data!.docs
+                  List<ChatGroupEntity> myGroups = snapshot.data!.docs
                       .map(
                         (e) => ChatGroupModel.fromJson(
                           e.data(),
-                        ),
+                        ).toEntity(),
                       )
                       .toList()
                     ..sort(

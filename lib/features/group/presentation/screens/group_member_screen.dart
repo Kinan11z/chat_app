@@ -1,3 +1,4 @@
+import 'package:chat_app/core/di/injection.dart';
 import 'package:chat_app/features/auth/data/models/user_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -5,13 +6,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:iconsax/iconsax.dart';
 
-import '../../data/models/chat_group_model.dart';
+import '../../domain/entities/chat_group_entity.dart';
 import '../manager/group/group_bloc.dart';
 
 class GroupMemberScreen extends StatefulWidget {
   const GroupMemberScreen({super.key, required this.groupInfo});
 
-  final ChatGroupModel groupInfo;
+  final ChatGroupEntity groupInfo;
 
   @override
   State<GroupMemberScreen> createState() => _GroupMemberScreenState();
@@ -27,7 +28,7 @@ class _GroupMemberScreenState extends State<GroupMemberScreen> {
 
     List<UserModel> members = [];
     return BlocProvider(
-      create: (context) => GroupBloc(),
+      create: (context) => getIt<GroupBloc>(),
       child: BlocConsumer<GroupBloc, GroupState>(
         listener: (context, state) {
           if (state is GroupSuccess) {

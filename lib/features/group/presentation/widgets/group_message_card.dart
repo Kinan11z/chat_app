@@ -2,13 +2,11 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:iconsax/iconsax.dart';
 
 import '../../../../core/utils/helper_functions.dart';
 import '../../../../core/utils/photo_view.dart';
 import '../../data/models/group_message_model.dart';
-import '../manager/chat_group_message/chat_group_message_bloc.dart';
 
 class GroupMessageCard extends StatelessWidget {
   const GroupMessageCard({
@@ -22,13 +20,10 @@ class GroupMessageCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     bool isMe = messageInfo.fromId == FirebaseAuth.instance.currentUser?.uid;
-    return BlocProvider(
-      create: (context) => ChatGroupMessageBloc(),
-      child: ChatMessageCardBody(
-        isMe: isMe,
-        messageInfo: messageInfo,
-        isSelected: isSelected,
-      ),
+    return ChatMessageCardBody(
+      isMe: isMe,
+      messageInfo: messageInfo,
+      isSelected: isSelected,
     );
   }
 }

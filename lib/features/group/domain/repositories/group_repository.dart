@@ -1,32 +1,37 @@
-import 'dart:io';
+import 'dart:typed_data';
 
-import '../../data/models/chat_group_model.dart';
+import 'package:dartz/dartz.dart';
+
+import '../../../../core/error/failure.dart';
+import '../entities/chat_group_entity.dart';
 
 abstract class GroupRepository {
-  Future createGroup({required String name, required List<String> members});
+  Future<Either<Failure, void>> createGroup(
+      {required String name, required List<String> members});
   Future sendGroupMessage({
     required String message,
-    required ChatGroupModel groupInfo,
+    required ChatGroupEntity groupInfo,
     required String? type,
   });
-  Future<void> sendImage({
-    required File imageFile,
-    required ChatGroupModel groupInfo,
+  Future<Either<Failure, void>> sendImage({
+    required Uint8List imageFile,
+    required String fileExtension,
+    required ChatGroupEntity groupInfo,
   });
-  Future editGroup({
+  Future<Either<Failure, void>> editGroup({
     required String groupId,
     required String name,
     required List<String> members,
   });
-  Future removeMember({
+  Future<Either<Failure, void>> removeMember({
     required String memberId,
     required String groupId,
   });
-  Future promoteMember({
+  Future<Either<Failure, void>> promoteMember({
     required String memberId,
     required String groupId,
   });
-  Future removePromote({
+  Future<Either<Failure, void>> removePromote({
     required String memberId,
     required String groupId,
   });
