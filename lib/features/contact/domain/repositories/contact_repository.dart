@@ -1,3 +1,7 @@
+import 'package:dartz/dartz.dart';
+
+import '../../../../core/error/failure.dart';
+
 abstract class ContactRepository {
-  Future<void> addContact(String email);
+  Future<Either<Failure, void>> addContact({required String email});
 }

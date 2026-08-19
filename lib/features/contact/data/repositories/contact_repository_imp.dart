@@ -1,12 +1,23 @@
+import 'package:chat_app/core/error/failure.dart';
+import 'package:dartz/dartz.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 import '../../domain/repositories/contact_repository.dart';
 import '../datasource/contact_remote_data_source.dart';
 
-class ContactRepositoryImp extends ContactRepository {
+class ContactRepositoryImp implements ContactRepository {
   final ContactRemoteDataSource remoteDataSource;
 
   ContactRepositoryImp({required this.remoteDataSource});
   @override
-  Future<void> addContact(String email) async {
-    return await remoteDataSource.addContact(email);
+  Future<Either<Failure, void>> addContact({required String email}) async {
+    try {
+      await remoteDataSource.addContact(email: email);
+      return const Right(null);
+    } on FirebaseAuthException catch (e) {
+      return Left(AuthFailure(e.message ?? 'Add contact failed'));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
   }
 }

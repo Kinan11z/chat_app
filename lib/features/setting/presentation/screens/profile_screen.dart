@@ -1,6 +1,8 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:chat_app/core/di/injection.dart';
 import 'package:chat_app/core/utils/widgets/app_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -24,6 +26,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   TextEditingController aboutCon = TextEditingController();
   UserModel? user;
   String imageUrl = '';
+  Uint8List? bytes;
   bool nameEdit = false;
   bool aboutEdit = false;
 
@@ -38,7 +41,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => ProfileBloc(),
+      create: (context) => getIt<ProfileBloc>(),
       child: BlocConsumer<ProfileBloc, ProfileState>(
         listener: (context, state) {
           if (state is ProfileSuccess) {
@@ -84,12 +87,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 HelperFunctions.pickImage().then(
                                   (file) {
                                     if (file != null) {
-                                      setState(() {
+                                      setState(() async {
                                         imageUrl = file.path;
+                                        bytes = await file.readAsBytes();
                                       });
-                                      // context.read<ProfileBloc>().add(
-                                      //       UpdateProfileImage(imageFile: file),
-                                      //     );
                                     }
                                   },
                                 );
@@ -183,9 +184,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       about: aboutCon.text.isNotEmpty
                                           ? aboutCon.text
                                           : null,
-                                      imageFile: imageUrl.isNotEmpty
-                                          ? File(imageUrl)
-                                          : null,
+                                      imageFile: bytes,
+                                      fileExtension: imageUrl.split('.').last,
                                     ),
                                   );
                             }

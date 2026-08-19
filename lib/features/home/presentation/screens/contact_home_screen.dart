@@ -1,3 +1,4 @@
+import 'package:chat_app/core/di/injection.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -76,7 +77,7 @@ class _ContactHomeScreenState extends State<ContactHomeScreen> {
             elevation: 10,
             builder: (context) {
               return BlocProvider(
-                create: (context) => ContactBloc(),
+                create: (context) => getIt<ContactBloc>(),
                 child: Container(
                   padding: const EdgeInsets.all(20),
                   child: Column(

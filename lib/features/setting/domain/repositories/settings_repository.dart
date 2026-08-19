@@ -1,12 +1,17 @@
-import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:chat_app/core/error/failure.dart';
+import 'package:dartz/dartz.dart';
 
 abstract class SettingsRepository {
-  Future<void> updateProfileImage({
-    required File imageFile,
+  Future<Either<Failure, void>> updateProfileImage({
+    required Uint8List imageFile,
+    required String fileExtension,
   });
-  Future<void> updateProfileDetails({
+  Future<Either<Failure, void>> updateProfileDetails({
     required String? name,
     required String? about,
-    required File? imageFile,
+    required Uint8List? imageFile,
+    required String fileExtension,
   });
 }

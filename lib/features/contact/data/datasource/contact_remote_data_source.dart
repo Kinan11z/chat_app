@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 abstract class ContactRemoteDataSource {
-  Future<void> addContact(String email);
+  Future<void> addContact({required String email});
 }
 
 class ContactRemoteDataSourceImp extends ContactRemoteDataSource {
@@ -10,7 +10,7 @@ class ContactRemoteDataSourceImp extends ContactRemoteDataSource {
   final String myUid = FirebaseAuth.instance.currentUser!.uid;
 
   @override
-  Future<void> addContact(String email) async {
+  Future<void> addContact({required String email}) async {
     QuerySnapshot userEmail = await firebaseFirestore
         .collection('users')
         .where('email', isEqualTo: email)
