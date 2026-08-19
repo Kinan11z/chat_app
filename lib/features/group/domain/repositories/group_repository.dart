@@ -3,7 +3,9 @@ import 'dart:typed_data';
 import 'package:dartz/dartz.dart';
 
 import '../../../../core/error/failure.dart';
+import '../../../auth/domain/entities/user_entity.dart';
 import '../entities/chat_group_entity.dart';
+import '../entities/group_message_entity.dart';
 
 abstract class GroupRepository {
   Future<Either<Failure, void>> createGroup(
@@ -35,4 +37,7 @@ abstract class GroupRepository {
     required String memberId,
     required String groupId,
   });
+  Stream<List<ChatGroupEntity>> getGroups();
+  Stream<List<GroupMessageEntity>> getGroupMessages({required String groupId});
+  Stream<List<UserEntity>> getUsers({required List<String> ids});
 }

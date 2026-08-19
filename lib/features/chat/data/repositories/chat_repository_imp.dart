@@ -2,6 +2,8 @@ import 'dart:typed_data';
 
 import 'package:chat_app/features/auth/domain/entities/user_entity.dart';
 import 'package:chat_app/features/chat/data/datasource/chat_remote_data_source.dart';
+import 'package:chat_app/features/chat/domain/entities/chat_room_entity.dart';
+import 'package:chat_app/features/chat/domain/entities/message_entity.dart';
 import 'package:chat_app/features/chat/domain/repositories/chat_repository.dart';
 import 'package:dartz/dartz.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -100,5 +102,34 @@ class ChatRepositoryImp implements ChatRepository {
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
+  }
+
+  @override
+  Stream<List<ChatRoomEntity>> getChats() {
+    return remoteDataSource
+        .getChats()
+        .map((models) => models.map((m) => m.toEntity()).toList());
+  }
+
+  @override
+  Stream<List<MessageEntity>> getMessages({required String roomId}) {
+    return remoteDataSource.getMessages(roomId: roomId).map(
+          (models) => models
+              .map(
+                (m) => m.toEntity(),
+              )
+              .toList(),
+        );
+  }
+
+  @override
+  Stream<List<UserEntity>> getUsers({required List<String> ids}) {
+    return remoteDataSource.getUsers(ids: ids).map(
+          (models) => models
+              .map(
+                (m) => m.toEntity(),
+              )
+              .toList(),
+        );
   }
 }

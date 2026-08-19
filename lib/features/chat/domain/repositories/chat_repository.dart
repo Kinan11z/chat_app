@@ -1,9 +1,11 @@
 import 'dart:typed_data';
 
+import 'package:chat_app/features/chat/domain/entities/message_entity.dart';
 import 'package:dartz/dartz.dart';
 
 import '../../../../core/error/failure.dart';
 import '../../../auth/domain/entities/user_entity.dart';
+import '../entities/chat_room_entity.dart';
 
 abstract class ChatRepository {
   Future<Either<Failure, void>> createChatRoom({required String email});
@@ -27,4 +29,7 @@ abstract class ChatRepository {
     required String roomId,
     required List<String> messageIds,
   });
+  Stream<List<ChatRoomEntity>> getChats();
+  Stream<List<MessageEntity>> getMessages({required String roomId});
+  Stream<List<UserEntity>> getUsers({required List<String> ids});
 }

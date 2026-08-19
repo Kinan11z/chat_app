@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:chat_app/features/auth/data/models/user_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -15,6 +16,7 @@ abstract class SettingsRemoteDataSource {
     required Uint8List? imageFile,
     required String fileExtension,
   });
+  Stream<UserModel> getCurrentUser();
 }
 
 class SettingsRemoteDataSourceImp extends SettingsRemoteDataSource {
@@ -63,5 +65,16 @@ class SettingsRemoteDataSourceImp extends SettingsRemoteDataSource {
         fileExtension: fileExtension,
       );
     }
+  }
+
+  @override
+  Stream<UserModel> getCurrentUser() {
+    return firebaseFirestore
+        .collection('users')
+        .doc(myUid)
+        .snapshots()
+        .map(
+          (doc) => doc.exists ? UserModel.fromJson(doc.data()!) : UserModel(),
+        );
   }
 }

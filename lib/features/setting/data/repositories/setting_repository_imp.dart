@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:chat_app/features/auth/domain/entities/user_entity.dart';
 import 'package:chat_app/features/setting/data/datasource/setting_remote_data_source.dart';
 import 'package:dartz/dartz.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -50,5 +51,10 @@ class SettingsRepositoryImp implements SettingsRepository {
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
+  }
+
+  @override
+  Stream<UserEntity> getCurrentUser() {
+    return remoteDataSource.getCurrentUser().map((m) => m.toEntity());
   }
 }

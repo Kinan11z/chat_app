@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:chat_app/features/group/data/models/chat_group_model.dart';
+import 'package:chat_app/features/group/data/models/group_message_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -43,6 +44,9 @@ abstract class GroupRemoteDataSource {
     required String memberId,
     required String groupId,
   });
+  Stream<List<ChatGroupModel>> getGroups();
+  Stream<List<GroupMessageModel>> getGroupMessages({required String groupId});
+  Stream<List<UserModel>> getUsers({required List<String> ids});
 }
 
 class GroupRemoteDataSourceImp extends GroupRemoteDataSource {
@@ -179,5 +183,39 @@ class GroupRemoteDataSourceImp extends GroupRemoteDataSource {
     await firebaseFirestore.collection('groups').doc(groupId).update({
       'admins_id': FieldValue.arrayRemove([memberId]),
     });
+  }
+
+  @override
+  Stream<List<ChatGroupModel>> getGroups() {
+    return firebaseFirestore
+        .collection('groups')
+        .where('members', arrayContains: myUid)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => ChatGroupModel.fromJson(doc.data()))
+            .toList());
+  }
+
+  @override
+  Stream<List<GroupMessageModel>> getGroupMessages({required String groupId}) {
+    return firebaseFirestore
+        .collection('groups')
+        .doc(groupId)
+        .collection('messages')
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => GroupMessageModel.fromJson(doc.data()))
+            .toList());
+  }
+
+  @override
+  Stream<List<UserModel>> getUsers({required List<String> ids}) {
+    return firebaseFirestore
+        .collection('users')
+        .where('id', whereIn: ids)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => UserModel.fromJson(doc.data()))
+            .toList());
   }
 }

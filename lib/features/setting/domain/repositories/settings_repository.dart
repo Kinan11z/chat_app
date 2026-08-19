@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:chat_app/features/auth/domain/entities/user_entity.dart';
 import 'package:chat_app/core/error/failure.dart';
 import 'package:dartz/dartz.dart';
 
@@ -14,4 +15,5 @@ abstract class SettingsRepository {
     required Uint8List? imageFile,
     required String fileExtension,
   });
+  Stream<UserEntity> getCurrentUser();
 }

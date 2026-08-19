@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../../core/utils/services/notification_services.dart';
+import '../../../auth/data/models/user_model.dart';
 
 abstract class ChatRemoteDataSource {
   Future<void> createRoom({required String email});
@@ -32,6 +33,9 @@ abstract class ChatRemoteDataSource {
     required String roomId,
     required List<String> messageIds,
   });
+  Stream<List<ChatRoomModel>> getChats();
+  Stream<List<MessageModel>> getMessages({required String roomId});
+  Stream<List<UserModel>> getUsers({required List<String> ids});
 }
 
 class ChatRemoteDataSourceImp extends ChatRemoteDataSource {
@@ -159,5 +163,40 @@ class ChatRemoteDataSourceImp extends ChatRemoteDataSource {
           .doc(element)
           .delete();
     }
+  }
+
+  @override
+  Stream<List<ChatRoomModel>> getChats() {
+    final myUid = FirebaseAuth.instance.currentUser!.uid;
+    return firebaseFirestore
+        .collection('rooms')
+        .where('members', arrayContains: myUid)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => ChatRoomModel.fromJson(doc.data()))
+            .toList());
+  }
+
+  @override
+  Stream<List<MessageModel>> getMessages({required String roomId}) {
+    return firebaseFirestore
+        .collection('rooms')
+        .doc(roomId)
+        .collection('messages')
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => MessageModel.fromJson(doc.data()))
+            .toList());
+  }
+
+  @override
+  Stream<List<UserModel>> getUsers({required List<String> ids}) {
+    return firebaseFirestore
+        .collection('users')
+        .where('id', whereIn: ids)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => UserModel.fromJson(doc.data()))
+            .toList());
   }
 }

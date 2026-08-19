@@ -7,7 +7,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../../../core/error/failure.dart';
 import '../../domain/entities/chat_group_entity.dart';
+import '../../domain/entities/group_message_entity.dart';
 import '../../domain/repositories/group_repository.dart';
+import '../../../auth/domain/entities/user_entity.dart';
 
 class GroupRepositoryImp implements GroupRepository {
   final GroupRemoteDataSource remoteDataSource;
@@ -136,5 +138,26 @@ class GroupRepositoryImp implements GroupRepository {
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
+  }
+
+  @override
+  Stream<List<ChatGroupEntity>> getGroups() {
+    return remoteDataSource
+        .getGroups()
+        .map((models) => models.map((m) => m.toEntity()).toList());
+  }
+
+  @override
+  Stream<List<GroupMessageEntity>> getGroupMessages({required String groupId}) {
+    return remoteDataSource.getGroupMessages(groupId: groupId).map(
+          (models) => models.map((m) => m.toEntity()).toList(),
+        );
+  }
+
+  @override
+  Stream<List<UserEntity>> getUsers({required List<String> ids}) {
+    return remoteDataSource.getUsers(ids: ids).map(
+          (models) => models.map((m) => m.toEntity()).toList(),
+        );
   }
 }
