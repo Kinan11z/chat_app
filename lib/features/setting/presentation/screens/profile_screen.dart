@@ -4,14 +4,13 @@ import 'dart:typed_data';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chat_app/core/di/injection.dart';
 import 'package:chat_app/core/utils/widgets/app_button.dart';
+import 'package:chat_app/features/auth/domain/entities/user_entity.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:iconsax/iconsax.dart';
-import 'package:provider/provider.dart';
 
-import '../../../../core/provider/provider.dart';
+import '../../../../core/presentation/session/session_cubit.dart';
 import '../../../../core/utils/helper_functions.dart';
-import '../../../auth/data/models/user_model.dart';
 import '../manager/profile/profile_bloc.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -24,7 +23,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   TextEditingController nameCon = TextEditingController();
   TextEditingController aboutCon = TextEditingController();
-  UserModel? user;
+  UserEntity? user;
   String imageUrl = '';
   Uint8List? bytes;
   bool nameEdit = false;
@@ -32,7 +31,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   void initState() {
-    user = Provider.of<ProviderApp>(context, listen: false).user;
+    user = context.read<SessionCubit>().state.user;
     super.initState();
     nameCon.text = user?.name ?? '';
     aboutCon.text = user?.about ?? '';
@@ -43,19 +42,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return BlocProvider(
       create: (context) => getIt<ProfileBloc>(),
       child: BlocConsumer<ProfileBloc, ProfileState>(
-        listener: (context, state) {
-          if (state is ProfileSuccess) {
-            Provider.of<ProviderApp>(context, listen: false).getUserDetails();
-          }
-        },
+        listener: (context, state) {},
         builder: (context, state) {
-          // if (state is ProfileLoadding) {
-          //   return Scaffold(
-          //     body: Center(
-          //       child: CircularProgressIndicator(),
-          //     ),
-          //   );
-          // }
           return Scaffold(
             appBar: AppBar(
               title: Text('Profile'),
@@ -154,7 +142,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: ListTile(
                           leading: Icon(Iconsax.direct),
                           title: Text("Email"),
-                          subtitle: Text(user!.email ?? '')),
+                          subtitle: Text(user!.email)),
                     ),
                     Card(
                       child: ListTile(

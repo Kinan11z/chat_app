@@ -1,3 +1,4 @@
+import 'package:chat_app/core/constants/strings.dart';
 import 'package:chat_app/core/error/failure.dart';
 import 'package:chat_app/features/auth/data/datasources/remote/auth_remote_data_source.dart';
 import 'package:chat_app/features/auth/domain/repositories/auth_repository.dart';
@@ -5,6 +6,7 @@ import 'package:dartz/dartz.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../domain/entities/user_entity.dart';
+import '../models/user_model.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource remoteDataSource;
@@ -73,13 +75,25 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
-  UserEntity _toEntity(User user) {
-    return UserEntity(
-      id: user.uid,
-      name: user.displayName ?? '',
-      email: user.email ?? '',
-      online: false,
-      myUsers: [],
-    );
+  @override
+  Stream<UserEntity?> authStateChanges() {
+    return remoteDataSource.authStateChanges().map(
+          (user) => user != null ? _toEntity(user) : null,
+        );
   }
+
+  @override
+  Future<Either<Failure, void>> signOut() async {
+    try {
+      await remoteDataSource.signOut();
+      return const Right(null);
+    } on FirebaseAuthException catch (e) {
+      return Left(AuthFailure(e.message ?? AppStrings.signoutFailure));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  UserEntity _toEntity(User user) =>
+      UserModel.fromFirebaseUser(user).toEntity();
 }

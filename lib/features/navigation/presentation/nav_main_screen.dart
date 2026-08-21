@@ -1,12 +1,11 @@
-import 'package:chat_app/features/auth/presentation/manager/auth/auth_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:iconsax/iconsax.dart';
-import 'package:provider/provider.dart';
 
 import '../../../core/di/injection.dart';
-import '../../../core/provider/provider.dart';
-import '../../auth/data/models/user_model.dart';
+import '../../../core/presentation/session/session_cubit.dart';
+
 import '../../home/presentation/screens/chats_home_screen.dart';
 import '../../home/presentation/screens/contact_home_screen.dart';
 import '../../home/presentation/screens/groups_home_screen.dart';
@@ -21,7 +20,6 @@ class NavMainScreen extends StatefulWidget {
 
 class _NavMainScreenState extends State<NavMainScreen> {
   PageController pageController = PageController();
-  AuthBloc authBloc = getIt<AuthBloc>();
   int currentIndex = 0;
   List<Widget> screens = const [
     ChatsHomeScreen(),
@@ -32,15 +30,13 @@ class _NavMainScreenState extends State<NavMainScreen> {
   @override
   void initState() {
     super.initState();
-    Provider.of<ProviderApp>(context, listen: false).init();
     SystemChannels.lifecycle.setMessageHandler((message) async {
-      print(message);
       if (message.toString() == 'AppLifecycleState.resumed') {
-        authBloc.add(UpdateActivateEvent(online: true));
+        getIt<SessionCubit>().setOnline(true);
       }
       if (message.toString() == 'AppLifecycleState.paused' ||
           message.toString() == 'AppLifecycleState.inactive') {
-        authBloc.add(UpdateActivateEvent(online: false));
+        getIt<SessionCubit>().setOnline(false);
       }
       return null;
     });
@@ -54,7 +50,7 @@ class _NavMainScreenState extends State<NavMainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    UserModel? user = Provider.of<ProviderApp>(context).user;
+    final user = context.watch<SessionCubit>().state.user;
     return Scaffold(
       body: user == null
           ? const Center(child: CircularProgressIndicator())

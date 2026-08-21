@@ -1,13 +1,12 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:chat_app/core/presentation/theme/theme_cubit.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:iconsax/iconsax.dart';
-import 'package:provider/provider.dart';
 
 import '../../../../core/di/injection.dart';
-import '../../../../core/provider/provider.dart';
-import '../../../auth/presentation/manager/auth/auth_bloc.dart';
+import '../../../../core/presentation/session/session_cubit.dart';
 import '../../../setting/presentation/screens/profile_screen.dart';
 import '../../../setting/presentation/screens/qr_code_screen.dart';
 
@@ -16,9 +15,8 @@ class SettingsHomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<ProviderApp>(context);
-    AuthBloc authBloc = getIt<AuthBloc>();
-
+    final user = context.watch<SessionCubit>().state.user;
+    final theme = context.watch<ThemeCubit>().state;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Settings'),
@@ -32,14 +30,14 @@ class SettingsHomeScreen extends StatelessWidget {
               minVerticalPadding: 40,
               leading: CircleAvatar(
                 radius: 40,
-                backgroundImage: provider.user?.imageUrl != null &&
-                        provider.user!.imageUrl!.isNotEmpty
-                    ? CachedNetworkImageProvider(
-                        provider.user!.imageUrl!,
-                      )
-                    : null,
+                backgroundImage:
+                    user?.imageUrl != null && user!.imageUrl!.isNotEmpty
+                        ? CachedNetworkImageProvider(
+                            user.imageUrl!,
+                          )
+                        : null,
               ),
-              title: Text(provider.user!.name ?? ''),
+              title: Text(user!.name),
               trailing: GestureDetector(
                 onTap: () => Navigator.push(
                   context,
@@ -70,9 +68,11 @@ class SettingsHomeScreen extends StatelessWidget {
                     return AlertDialog(
                       content: SingleChildScrollView(
                         child: BlockPicker(
-                          pickerColor: Color(provider.mainColor),
+                          pickerColor: Color(theme.mainColor),
                           onColorChanged: (value) {
-                            provider.changeMainColor(value.value);
+                            context
+                                .read<ThemeCubit>()
+                                .changeMainColor(value.value);
                           },
                         ),
                       ),
@@ -96,9 +96,11 @@ class SettingsHomeScreen extends StatelessWidget {
                 leading: Icon(Iconsax.moon),
                 trailing: SizedBox(
                   child: Switch(
-                    value: provider.themeMode == ThemeMode.dark,
+                    value: theme.themeMode == ThemeMode.dark,
                     onChanged: (value) {
-                      provider.changeMode(value);
+                      context.read<ThemeCubit>().changeMode(
+                            value ? ThemeMode.dark : ThemeMode.light,
+                          );
                     },
                   ),
                 ),
@@ -107,8 +109,8 @@ class SettingsHomeScreen extends StatelessWidget {
             Card(
               child: ListTile(
                 onTap: () async {
-                  authBloc.add(UpdateActivateEvent(online: false));
-                  await FirebaseAuth.instance.signOut();
+                  getIt<SessionCubit>().setOnline(false);
+                  await getIt<SessionCubit>().signOut();
                 },
                 title: Text('Signout'),
                 trailing: Icon(Iconsax.logout_1),

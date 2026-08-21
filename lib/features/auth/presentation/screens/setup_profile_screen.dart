@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:iconsax/iconsax.dart';
 import '../../../../core/di/injection.dart';
+import '../../../../core/presentation/session/session_cubit.dart';
 import '../../../../core/utils/widgets/app_button.dart';
 import '../../../../core/utils/widgets/app_text_field.dart';
 import '../../../../core/utils/widgets/logo_app.dart';
@@ -39,7 +40,7 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
         appBar: AppBar(
           actions: [
             IconButton(
-              onPressed: () async => await FirebaseAuth.instance.signOut(),
+              onPressed: () => context.read<SessionCubit>().signOut(),
               icon: const Icon(Iconsax.logout_1),
             )
           ],

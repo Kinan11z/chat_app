@@ -8,12 +8,15 @@ abstract class AuthRemoteDataSource {
   Future<void> resetPassword(String email);
   Future<void> updateActive(bool online);
   Future<void> createUser();
+  Stream<User?> authStateChanges();
+  Future<void> signOut();
 }
 
 class AuthRemoteDataSourceImp implements AuthRemoteDataSource {
   final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
   final FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
-
+  @override
+  Stream<User?> authStateChanges() => firebaseAuth.userChanges();
   @override
   Future<User> signIn(String email, String password) async {
     final credential = await firebaseAuth.signInWithEmailAndPassword(
@@ -70,4 +73,7 @@ class AuthRemoteDataSourceImp implements AuthRemoteDataSource {
       'last_activated': DateTime.now().millisecondsSinceEpoch.toString(),
     });
   }
+
+  @override
+  Future<void> signOut() => firebaseAuth.signOut();
 }

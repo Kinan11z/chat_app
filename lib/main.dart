@@ -1,14 +1,16 @@
+import 'package:chat_app/core/presentation/session/session_state.dart';
 import 'package:chat_app/core/supabase_config.dart';
 import 'package:chat_app/features/auth/presentation/screens/setup_profile_screen.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/di/injection.dart';
-import 'core/provider/provider.dart';
+import 'core/presentation/session/session_cubit.dart';
+import 'core/presentation/theme/theme_cubit.dart';
+import 'core/presentation/theme/theme_state.dart';
 import 'core/utils/services/notification_services.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/navigation/presentation/nav_main_screen.dart';
@@ -43,41 +45,41 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => ProviderApp(),
-      child: Consumer<ProviderApp>(
-        builder: (context, value, child) => MaterialApp(
-          debugShowCheckedModeBanner: false,
-          themeMode: value.themeMode,
-          darkTheme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: Color(value.mainColor),
-              brightness: Brightness.dark,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider.value(value: getIt<ThemeCubit>()),
+        BlocProvider.value(value: getIt<SessionCubit>()),
+      ],
+      child: BlocBuilder<ThemeCubit, ThemeState>(
+        builder: (context, theme) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            themeMode: theme.themeMode,
+            darkTheme: ThemeData(
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: Color(theme.mainColor),
+                brightness: Brightness.dark,
+              ),
             ),
-          ),
-          theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: Color(value.mainColor),
-              brightness: Brightness.light,
+            theme: ThemeData(
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: Color(theme.mainColor),
+                brightness: Brightness.light,
+              ),
             ),
-          ),
-          home: StreamBuilder(
-            stream: FirebaseAuth.instance.userChanges(),
-            builder: (context, snapshot) {
-              if (snapshot.hasData) {
-                if (FirebaseAuth.instance.currentUser!.displayName == '' ||
-                    FirebaseAuth.instance.currentUser!.displayName == null) {
-                  return const SetupProfileScreen();
-                } else {
+            home: BlocBuilder<SessionCubit, SessionState>(
+              builder: (context, session) {
+                if (session.status == SessionStatus.authenticated) {
                   return const NavMainScreen();
                 }
-              } else {
+                if (session.status == SessionStatus.newUser) {
+                  return const SetupProfileScreen();
+                }
                 return const LoginScreen();
-              }
-            },
-          ),
-          //  const NavMainScreen(),
-        ),
+              },
+            ),
+          );
+        },
       ),
     );
   }

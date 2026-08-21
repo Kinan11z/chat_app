@@ -1,6 +1,7 @@
 class AppStrings {
   static const signedInSuccess = 'Signed in successfully';
   static const signUpSuccess = 'Account created successfully';
+  static const signoutFailure = 'Sign out Failure';
   static const resetSentSuccess = 'Reset email sent successfully';
   static const accountCreatedSuccess = 'Account created successfully';
   static const readMessageSuccess = 'Read message successfully';

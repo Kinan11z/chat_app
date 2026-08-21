@@ -15,4 +15,6 @@ abstract class AuthRepository {
   Future<Either<Failure, void>> resetPassword({required String email});
   Future<Either<Failure, void>> updateActive({required bool online});
   Future<Either<Failure, void>> createUser();
+  Stream<UserEntity?> authStateChanges();
+  Future<Either<Failure, void>> signOut();
 }

@@ -6,8 +6,10 @@ import '../../features/auth/data/datasources/remote/auth_remote_data_source.dart
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/auth/domain/usecases/create_user_usecase.dart';
+import '../../features/auth/domain/usecases/get_auth_state_stream.dart';
 import '../../features/auth/domain/usecases/reset_password_usecase.dart';
 import '../../features/auth/domain/usecases/sign_in_usecase.dart';
+import '../../features/auth/domain/usecases/sign_out_usecase.dart';
 import '../../features/auth/domain/usecases/sign_up_usecase.dart';
 import '../../features/auth/domain/usecases/update_active_use_case.dart';
 import '../../features/auth/presentation/manager/auth/auth_bloc.dart';
@@ -49,6 +51,8 @@ import '../../features/setting/data/repositories/setting_repository_imp.dart';
 import '../../features/setting/domain/repositories/settings_repository.dart';
 import '../../features/setting/domain/usecases/get_current_user_use_case.dart';
 import '../../features/setting/presentation/manager/profile/profile_bloc.dart';
+import '../presentation/session/session_cubit.dart';
+import '../presentation/theme/theme_cubit.dart';
 
 final GetIt getIt = GetIt.instance;
 
@@ -108,6 +112,8 @@ Future<void> init() async {
   getIt.registerLazySingleton(() => GetGroupUsersStream(repository: getIt()));
   getIt.registerLazySingleton(() => GetContactsStream(repository: getIt()));
   getIt.registerLazySingleton(() => GetCurrentUserStream(repository: getIt()));
+  getIt.registerLazySingleton(() => GetAuthStateStream(repository: getIt()));
+  getIt.registerLazySingleton(() => SignOutUseCase(repository: getIt()));
   //************************************* */
   // blocs
   getIt.registerFactory(() => AuthBloc(
@@ -143,4 +149,12 @@ Future<void> init() async {
   getIt.registerFactory(() => ProfileBloc(
         updateProfileUseCase: getIt(),
       ));
+  getIt.registerLazySingleton(() => ThemeCubit());
+  getIt.registerLazySingleton(() => SessionCubit(
+        getAuthStateStream: getIt(),
+        getCurrentUserStream: getIt(),
+        updateActiveUseCase: getIt(),
+        signOutUseCase: getIt(),
+      ));
+  await getIt<ThemeCubit>().loadPreferences();
 }

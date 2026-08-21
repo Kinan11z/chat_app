@@ -21,7 +21,7 @@ abstract class SettingsRemoteDataSource {
 
 class SettingsRemoteDataSourceImp extends SettingsRemoteDataSource {
   final FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
-  final String myUid = FirebaseAuth.instance.currentUser!.uid;
+  String get myUid => FirebaseAuth.instance.currentUser!.uid;
   @override
   Future<void> updateProfileImage({
     required Uint8List imageFile,
@@ -69,11 +69,7 @@ class SettingsRemoteDataSourceImp extends SettingsRemoteDataSource {
 
   @override
   Stream<UserModel> getCurrentUser() {
-    return firebaseFirestore
-        .collection('users')
-        .doc(myUid)
-        .snapshots()
-        .map(
+    return firebaseFirestore.collection('users').doc(myUid).snapshots().map(
           (doc) => doc.exists ? UserModel.fromJson(doc.data()!) : UserModel(),
         );
   }
