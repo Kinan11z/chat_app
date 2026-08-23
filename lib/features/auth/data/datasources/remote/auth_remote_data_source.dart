@@ -10,6 +10,7 @@ abstract class AuthRemoteDataSource {
   Future<void> createUser();
   Stream<User?> authStateChanges();
   Future<void> signOut();
+  Future<void> updateDisplayName(String name);
 }
 
 class AuthRemoteDataSourceImp implements AuthRemoteDataSource {
@@ -72,6 +73,11 @@ class AuthRemoteDataSourceImp implements AuthRemoteDataSource {
       'online': online,
       'last_activated': DateTime.now().millisecondsSinceEpoch.toString(),
     });
+  }
+
+  @override
+  Future<void> updateDisplayName(String name) async {
+    await firebaseAuth.currentUser?.updateDisplayName(name);
   }
 
   @override

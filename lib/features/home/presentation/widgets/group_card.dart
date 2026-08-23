@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../../group/domain/entities/chat_group_entity.dart';
 import '../../../group/presentation/screens/group_screen.dart';
@@ -24,8 +25,9 @@ class GroupCard extends StatelessWidget {
       child: Card(
         child: ListTile(
           leading: CircleAvatar(
+            backgroundImage: CachedNetworkImageProvider(groupInfo.image ?? ''),
             backgroundColor: Colors.grey,
-            child: Text(groupInfo.name!.characters.first),
+            child: Text(groupInfo.name.characters.first),
           ),
           title: Text(groupInfo.name.toString()),
           subtitle: Text(

@@ -96,4 +96,16 @@ class AuthRepositoryImpl implements AuthRepository {
 
   UserEntity _toEntity(User user) =>
       UserModel.fromFirebaseUser(user).toEntity();
+  @override
+  Future<Either<Failure, void>> updateDisplayName(
+      {required String name}) async {
+    try {
+      await remoteDataSource.updateDisplayName(name);
+      return const Right(null);
+    } on FirebaseAuthException catch (e) {
+      return Left(AuthFailure(e.message ?? 'Update name failed'));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
 }

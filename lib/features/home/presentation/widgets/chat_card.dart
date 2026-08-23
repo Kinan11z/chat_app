@@ -1,8 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chat_app/features/auth/data/models/user_model.dart';
 import 'package:chat_app/features/auth/domain/entities/user_entity.dart';
-import 'package:chat_app/features/chat/data/models/chat_room_model.dart';
 import 'package:chat_app/features/chat/data/models/message_model.dart';
+import 'package:chat_app/features/chat/domain/entities/chat_room_entity.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -15,10 +15,10 @@ class ChatCard extends StatelessWidget {
     super.key,
     required this.item,
   });
-  final ChatRoomModel item;
+  final ChatRoomEntity item;
   @override
   Widget build(BuildContext context) {
-    final List members = item.members!
+    final List members = item.members
         .where(
           (element) => element != FirebaseAuth.instance.currentUser!.uid,
         )
@@ -44,7 +44,7 @@ class ChatCard extends StatelessWidget {
                   MaterialPageRoute(
                     builder: (context) => ChatScreen(
                       userInfo: userInfo,
-                      roomId: item.id ?? '',
+                      roomId: item.id,
                     ),
                   ),
                 );
@@ -61,7 +61,7 @@ class ChatCard extends StatelessWidget {
               subtitle: Text(
                 item.lastMessage == ''
                     ? userInfo.about ?? ''
-                    : item.lastMessage ?? '',
+                    : item.lastMessage,
                 style: Theme.of(context).textTheme.labelSmall,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -93,7 +93,7 @@ class ChatCard extends StatelessWidget {
                         )
                       : Text(
                           AppDateTimeFormatter.dateAndTime(
-                            item.lastMessageTime ?? '',
+                            item.lastMessageTime,
                           ),
                         );
                 },

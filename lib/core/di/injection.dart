@@ -12,6 +12,7 @@ import '../../features/auth/domain/usecases/sign_in_usecase.dart';
 import '../../features/auth/domain/usecases/sign_out_usecase.dart';
 import '../../features/auth/domain/usecases/sign_up_usecase.dart';
 import '../../features/auth/domain/usecases/update_active_use_case.dart';
+import '../../features/auth/domain/usecases/update_display_name_usecase.dart';
 import '../../features/auth/presentation/manager/auth/auth_bloc.dart';
 import '../../features/chat/data/datasource/chat_remote_data_source.dart';
 import '../../features/chat/data/repositories/chat_repository_imp.dart';
@@ -26,11 +27,13 @@ import '../../features/chat/domain/usecases/send_image_use_case.dart';
 import '../../features/chat/domain/usecases/send_message_use_case.dart';
 import '../../features/chat/presentation/manager/chat_message/chat_message_bloc.dart';
 import '../../features/chat/presentation/manager/chat_room/chat_room_bloc.dart';
+import '../../features/chat/presentation/manager/chats/chats_cubit.dart';
 import '../../features/contact/data/datasource/contact_remote_data_source.dart';
 import '../../features/contact/data/repositories/contact_repository_imp.dart';
 import '../../features/contact/domain/repositories/contact_repository.dart';
 import '../../features/contact/domain/usecases/get_contacts_use_case.dart';
-import '../../features/contact/presentation/manager/bloc/contact_bloc.dart';
+import '../../features/contact/presentation/manager/contact/contact_bloc.dart';
+import '../../features/contact/presentation/manager/contacts/contacts_cubit.dart';
 import '../../features/group/data/datasource/group_remote_data_source.dart';
 import '../../features/group/data/repositories/group_repository_imp.dart';
 import '../../features/group/domain/repositories/group_repository.dart';
@@ -46,6 +49,7 @@ import '../../features/group/domain/usecases/send_group_image_use_case.dart';
 import '../../features/group/domain/usecases/send_group_message_use_case.dart';
 import '../../features/group/presentation/manager/chat_group_message/chat_group_message_bloc.dart';
 import '../../features/group/presentation/manager/group/group_bloc.dart';
+import '../../features/group/presentation/manager/groups/groups_cubit.dart';
 import '../../features/setting/data/datasource/setting_remote_data_source.dart';
 import '../../features/setting/data/repositories/setting_repository_imp.dart';
 import '../../features/setting/domain/repositories/settings_repository.dart';
@@ -114,6 +118,8 @@ Future<void> init() async {
   getIt.registerLazySingleton(() => GetCurrentUserStream(repository: getIt()));
   getIt.registerLazySingleton(() => GetAuthStateStream(repository: getIt()));
   getIt.registerLazySingleton(() => SignOutUseCase(repository: getIt()));
+  getIt.registerLazySingleton(
+      () => UpdateDisplayNameUseCase(repository: getIt()));
   //************************************* */
   // blocs
   getIt.registerFactory(() => AuthBloc(
@@ -122,6 +128,7 @@ Future<void> init() async {
         createUserUsecase: getIt(),
         resetPasswordUsecase: getIt(),
         updateActiveUseCase: getIt(),
+        updateDisplayNameUseCase: getIt(),
       ));
   getIt.registerFactory(() => ChatMessageBloc(
         sendMessageUseCase: getIt(),
@@ -156,5 +163,9 @@ Future<void> init() async {
         updateActiveUseCase: getIt(),
         signOutUseCase: getIt(),
       ));
+  getIt.registerFactory(() => ChatsCubit(getChatsStream: getIt()));
+  getIt.registerFactory(() => GroupsCubit(getGroupsStream: getIt()));
+  getIt.registerFactory(() => ContactsCubit(getContactsStream: getIt()));
+
   await getIt<ThemeCubit>().loadPreferences();
 }

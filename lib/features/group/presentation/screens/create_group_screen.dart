@@ -1,13 +1,16 @@
-import 'package:chat_app/core/di/injection.dart';
-import 'package:chat_app/core/utils/validators.dart';
-import 'package:chat_app/core/utils/widgets/app_text_field.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:iconsax/iconsax.dart';
 
-import '../../../auth/data/models/user_model.dart';
+import '../../../../core/di/injection.dart';
+import '../../../../core/presentation/session/session_cubit.dart';
+import '../../../../core/utils/helper_functions.dart';
+import '../../../../core/utils/widgets/app_button.dart';
+import '../../../../core/utils/widgets/app_text_field.dart';
+import '../../../contact/presentation/manager/contacts/contacts_cubit.dart';
 import '../manager/group/group_bloc.dart';
 
 class CreateGroupScreen extends StatefulWidget {
@@ -18,174 +21,150 @@ class CreateGroupScreen extends StatefulWidget {
 }
 
 class _CreateGroupScreenState extends State<CreateGroupScreen> {
-  late TextEditingController groupNameController;
+  final TextEditingController nameCon = TextEditingController();
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
-  List<String> members = [];
-  List<String> myContacts = [];
-  @override
-  void initState() {
-    super.initState();
-    groupNameController = TextEditingController();
-  }
+  File? imageFile;
+  Uint8List? imageBytes;
+  String? imageExtension;
+  final List<String> selectedMembers = [];
 
   @override
   void dispose() {
+    nameCon.dispose();
     super.dispose();
-    groupNameController.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    final picked = await HelperFunctions.pickImage();
+    if (picked != null) {
+      final bytes = await picked.readAsBytes();
+      setState(() {
+        imageFile = picked;
+        imageBytes = bytes;
+        imageExtension = picked.path.split('.').last;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => getIt<GroupBloc>(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (_) => getIt<GroupBloc>()),
+        BlocProvider(create: (_) => getIt<ContactsCubit>()),
+      ],
       child: BlocConsumer<GroupBloc, GroupState>(
         listener: (context, state) {
           if (state is GroupSuccess) {
             Navigator.pop(context);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.message)),
+            );
+          } else if (state is GroupError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.message)),
+            );
           }
         },
         builder: (context, state) {
           return Scaffold(
-            appBar: AppBar(
-              title: Text('Create group'),
-            ),
-            floatingActionButton: FloatingActionButton.extended(
-              onPressed: () {
-                if (formKey.currentState?.validate() ?? false) {
-                  if (members.isNotEmpty) {
-                    context.read<GroupBloc>().add(
-                          CreateGroupEvent(
-                            name: groupNameController.text,
-                            members: members,
-                          ),
-                        );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Please Enter Members'),
-                      ),
-                    );
-                  }
-                }
-              },
-              label: state is GroupLoadding
-                  ? Center(
-                      child: CircularProgressIndicator(),
-                    )
-                  : Text('Done'),
-              icon: state is GroupLoadding ? null : Icon(Iconsax.tick_circle),
-            ),
-            body: Padding(
+            appBar: AppBar(title: const Text('Create Group')),
+            body: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Form(
                 key: formKey,
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            CircleAvatar(
-                              radius: 40,
-                              child: Icon(Iconsax.user),
-                            ),
-                            Positioned(
-                              bottom: -10,
-                              right: -10,
-                              child: IconButton(
-                                onPressed: () {},
-                                icon: const Icon(Icons.add_a_photo),
-                              ),
-                            ),
-                          ],
+                    Center(
+                      child: GestureDetector(
+                        onTap: _pickImage,
+                        child: CircleAvatar(
+                          radius: 50,
+                          backgroundImage:
+                              imageFile != null ? FileImage(imageFile!) : null,
+                          child: imageFile == null
+                              ? const Icon(Iconsax.camera, size: 30)
+                              : null,
                         ),
-                        SizedBox(
-                          width: 16,
-                        ),
-                        Expanded(
-                          child: AppTextField(
-                            controller: groupNameController,
-                            label: 'Group name',
-                            prefixIcon: Icon(Iconsax.user_octagon),
-                            validator: Validators.name,
-                          ),
-                        )
-                      ],
+                      ),
                     ),
-                    Divider(
-                      height: 48,
+                    const SizedBox(height: 16),
+                    AppTextField(
+                      controller: nameCon,
+                      label: 'Group Name',
+                      validator: (v) => v!.isEmpty ? 'Required' : null,
                     ),
-                    Row(
-                      children: [
-                        Text("Members"),
-                        Spacer(),
-                        Text(members.length.toString()),
-                      ],
-                    ),
-                    StreamBuilder(
-                      stream: FirebaseFirestore.instance
-                          .collection('users')
-                          .doc(FirebaseAuth.instance.currentUser!.uid)
-                          .snapshots(),
-                      builder: (context, snapshot) {
-                        if (snapshot.hasData) {
-                          myContacts = List<String>.from(
-                              snapshot.data?.data()?['my_users'] ?? []);
-                          return StreamBuilder(
-                            stream: FirebaseFirestore.instance
-                                .collection('users')
-                                .where('id',
-                                    whereIn:
-                                        myContacts.isEmpty ? [''] : myContacts)
-                                .snapshots(),
-                            builder: (context, snapshot) {
-                              if (snapshot.hasData) {
-                                List<UserModel> users = snapshot.data!.docs
-                                    .map(
-                                      (e) => UserModel.fromJson(e.data()),
-                                    )
-                                    .where(
-                                      (element) =>
-                                          element.id !=
-                                          FirebaseAuth
-                                              .instance.currentUser!.uid,
-                                    )
-                                    .toList()
-                                  ..sort(
-                                    (a, b) => a.name!.compareTo(b.name!),
-                                  );
-                                return Expanded(
-                                  child: ListView.builder(
-                                    itemCount: users.length,
-                                    itemBuilder: (context, index) =>
-                                        CheckboxListTile(
-                                      value: members.contains(users[index].id),
-                                      onChanged: (value) {
-                                        setState(() {
-                                          if (value == true) {
-                                            members.add(users[index].id!);
-                                          } else {
-                                            members.remove(users[index].id!);
-                                          }
-                                        });
-                                      },
-                                      checkboxShape: CircleBorder(),
-                                      title: Text(users[index].name!),
-                                    ),
-                                  ),
-                                );
-                              }
-                              return const Center(
-                                child: CircularProgressIndicator(),
+                    const SizedBox(height: 16),
+                    const Text('Select Members',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    BlocBuilder<ContactsCubit, ContactsState>(
+                      builder: (context, contactsState) {
+                        if (contactsState is ContactsLoading) {
+                          return const Center(
+                              child: CircularProgressIndicator());
+                        }
+                        if (contactsState is ContactsError) {
+                          return Center(child: Text(contactsState.message));
+                        }
+                        if (contactsState is ContactsLoaded) {
+                          final myId =
+                              context.read<SessionCubit>().state.user?.id ?? '';
+                          final available = contactsState.contacts
+                              .where((c) => c.id != myId)
+                              .toList();
+
+                          if (available.isEmpty) {
+                            return const Center(
+                                child: Text('لا توجد جهات اتصال'));
+                          }
+                          return ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: available.length,
+                            itemBuilder: (context, index) {
+                              final user = available[index];
+                              final isSelected =
+                                  selectedMembers.contains(user.id);
+                              return CheckboxListTile(
+                                title: Text(user.name),
+                                subtitle: Text(user.email),
+                                value: isSelected,
+                                onChanged: (val) {
+                                  setState(() {
+                                    if (val == true) {
+                                      selectedMembers.add(user.id);
+                                    } else {
+                                      selectedMembers.remove(user.id);
+                                    }
+                                  });
+                                },
                               );
                             },
                           );
                         }
-                        return const Center(
-                          child: CircularProgressIndicator(),
-                        );
+                        return const SizedBox();
                       },
+                    ),
+                    const SizedBox(height: 24),
+                    AppButton(
+                      onPressed: state is GroupLoadding
+                          ? null
+                          : () {
+                              if (formKey.currentState!.validate() &&
+                                  selectedMembers.isNotEmpty) {
+                                context.read<GroupBloc>().add(
+                                      CreateGroupEvent(
+                                        name: nameCon.text.trim(),
+                                        members: selectedMembers,
+                                        // imageFile: imageBytes,
+                                        // fileExtension: imageExtension,
+                                      ),
+                                    );
+                              }
+                            },
+                      text: 'Create Group',
                     ),
                   ],
                 ),

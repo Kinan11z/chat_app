@@ -17,4 +17,5 @@ abstract class AuthRepository {
   Future<Either<Failure, void>> createUser();
   Stream<UserEntity?> authStateChanges();
   Future<Either<Failure, void>> signOut();
+  Future<Either<Failure, void>> updateDisplayName({required String name});
 }

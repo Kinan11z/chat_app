@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:iconsax/iconsax.dart';
@@ -83,12 +82,10 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
                         );
                       }
                       return AppButton(
-                        onPressed: () => FirebaseAuth.instance.currentUser
-                            ?.updateDisplayName(usernameController.text)
-                            .then(
-                              (value) => context.read<AuthBloc>().add(
-                                    CreateUserRequested(),
-                                  ),
+                        onPressed: () => context.read<AuthBloc>().add(
+                              CreateUserRequested(
+                                name: usernameController.text.trim(),
+                              ),
                             ),
                         text: 'Continue'.toUpperCase(),
                       );

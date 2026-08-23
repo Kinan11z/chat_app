@@ -7,6 +7,7 @@ import '../../../../../core/constants/strings.dart';
 import '../../../../../core/usecases/usecase.dart';
 import '../../../domain/usecases/sign_up_usecase.dart';
 import '../../../domain/usecases/update_active_use_case.dart';
+import '../../../domain/usecases/update_display_name_usecase.dart';
 
 part 'auth_event.dart';
 part 'auth_state.dart';
@@ -17,12 +18,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final CreateUserUsecase createUserUsecase;
   final ResetPasswordUsecase resetPasswordUsecase;
   final UpdateActiveUseCase updateActiveUseCase;
+  final UpdateDisplayNameUseCase updateDisplayNameUseCase;
   AuthBloc({
     required this.signInUsecase,
     required this.signUpUsecase,
     required this.createUserUsecase,
     required this.resetPasswordUsecase,
     required this.updateActiveUseCase,
+    required this.updateDisplayNameUseCase,
   }) : super(AuthInitial()) {
     on<SignInRequested>(_onSignInRequested);
     on<SignUpRequested>(_onSignUpRequested);
@@ -56,6 +59,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   Future<void> _onCreateUserRequested(
       CreateUserRequested event, Emitter<AuthState> emit) async {
     emit(AuthLoading());
+    final nameResult = await updateDisplayNameUseCase(
+        UpdateDisplayNameParams(name: event.name));
+    if (nameResult.isLeft()) {
+      emit(AuthError(nameResult.fold((f) => f.message, (_) => '')));
+      return;
+    }
     final result = await createUserUsecase(const NoParams());
     result.fold(
       (failure) => emit(AuthError(failure.message)),

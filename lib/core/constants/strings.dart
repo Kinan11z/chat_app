@@ -32,4 +32,5 @@ class AppStrings {
   static const String sendGroupMessageSuccess =
       'Group message sent successfully.';
   static const String sendGroupImageSuccess = 'Group image sent successfully.';
+  static const String somethingWentWrong = 'Something went wrong.';
 }
