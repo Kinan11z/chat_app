@@ -16,6 +16,7 @@ abstract class SettingsRemoteDataSource {
     required Uint8List? imageFile,
     required String fileExtension,
   });
+  Future<void> updatePushToken({required String token});
   Stream<UserModel> getCurrentUser();
 }
 
@@ -65,6 +66,13 @@ class SettingsRemoteDataSourceImp extends SettingsRemoteDataSource {
         fileExtension: fileExtension,
       );
     }
+  }
+
+  @override
+  Future<void> updatePushToken({required String token}) async {
+    await firebaseFirestore.collection('users').doc(myUid).update({
+      'push_token': token,
+    });
   }
 
   @override

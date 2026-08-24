@@ -14,6 +14,14 @@ class NotificationServices {
   FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
   final notificationPlugin = FlutterLocalNotificationsPlugin();
 
+  Future<String?> getFCMToken() async {
+    try {
+      return await _firebaseMessaging.getToken();
+    } catch (e) {
+      return null;
+    }
+  }
+
   initializeNotification() async {
     await _firebaseMessaging.requestPermission();
 

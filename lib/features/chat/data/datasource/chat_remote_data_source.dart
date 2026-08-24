@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:chat_app/features/auth/domain/entities/user_entity.dart';
@@ -35,6 +36,7 @@ abstract class ChatRemoteDataSource {
   });
   Stream<List<ChatRoomModel>> getChats();
   Stream<List<MessageModel>> getMessages({required String roomId});
+  Stream<int> getUnreadCount({required String roomId});
   Stream<List<UserModel>> getUsers({required List<String> ids});
 }
 
@@ -190,13 +192,62 @@ class ChatRemoteDataSourceImp extends ChatRemoteDataSource {
   }
 
   @override
-  Stream<List<UserModel>> getUsers({required List<String> ids}) {
+  Stream<int> getUnreadCount({required String roomId}) {
     return firebaseFirestore
-        .collection('users')
-        .where('id', whereIn: ids)
+        .collection('rooms')
+        .doc(roomId)
+        .collection('messages')
+        .where('read', isEqualTo: '')
         .snapshots()
         .map((snapshot) => snapshot.docs
-            .map((doc) => UserModel.fromJson(doc.data()))
-            .toList());
+            .where((doc) => doc.data()['from_id'] != myUid)
+            .length);
+  }
+
+  @override
+  Stream<List<UserModel>> getUsers({required List<String> ids}) {
+    // Firestore 'whereIn' accepts 10 items max per query, so the ids are
+    // queried in chunks and the results are merged into a single stream.
+    final chunks = <List<String>>[];
+    for (var i = 0; i < ids.length; i += 10) {
+      chunks.add(
+        ids.sublist(i, i + 10 > ids.length ? ids.length : i + 10),
+      );
+    }
+    if (chunks.isEmpty) return Stream.value([]);
+
+    late StreamController<List<UserModel>> controller;
+    final latest = <String, UserModel>{};
+    final subs = <StreamSubscription<QuerySnapshot<Map<String, dynamic>>>>[];
+
+    void emitMerged() {
+      if (!controller.isClosed) {
+        controller.add(latest.values.toList());
+      }
+    }
+
+    controller = StreamController<List<UserModel>>(
+      onListen: () {
+        for (final chunk in chunks) {
+          subs.add(
+            firebaseFirestore
+                .collection('users')
+                .where('id', whereIn: chunk)
+                .snapshots()
+                .listen(
+              (snapshot) {
+                for (final doc in snapshot.docs) {
+                  latest[doc.id] = UserModel.fromJson(doc.data());
+                }
+                emitMerged();
+              },
+              onError: controller.addError,
+            ),
+          );
+        }
+      },
+      onCancel: () => Future.wait(subs.map((sub) => sub.cancel())),
+    );
+    return controller.stream;
   }
 }

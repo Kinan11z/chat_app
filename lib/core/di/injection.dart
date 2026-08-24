@@ -21,6 +21,7 @@ import '../../features/chat/domain/usecases/chat_room_use_case.dart';
 import '../../features/chat/domain/usecases/delete_message_use_case.dart';
 import '../../features/chat/domain/usecases/get_chats_use_case.dart';
 import '../../features/chat/domain/usecases/get_messages_use_case.dart';
+import '../../features/chat/domain/usecases/get_unread_count_use_case.dart';
 import '../../features/chat/domain/usecases/get_users_use_case.dart';
 import '../../features/chat/domain/usecases/read_message_use_case.dart';
 import '../../features/chat/domain/usecases/send_image_use_case.dart';
@@ -28,6 +29,9 @@ import '../../features/chat/domain/usecases/send_message_use_case.dart';
 import '../../features/chat/presentation/manager/chat_message/chat_message_bloc.dart';
 import '../../features/chat/presentation/manager/chat_room/chat_room_bloc.dart';
 import '../../features/chat/presentation/manager/chats/chats_cubit.dart';
+import '../../features/chat/presentation/manager/messages/messages_cubit.dart';
+import '../../features/chat/presentation/manager/unread/unread_count_cubit.dart';
+import '../../features/chat/presentation/manager/users/users_cubit.dart';
 import '../../features/contact/data/datasource/contact_remote_data_source.dart';
 import '../../features/contact/data/repositories/contact_repository_imp.dart';
 import '../../features/contact/domain/repositories/contact_repository.dart';
@@ -50,10 +54,13 @@ import '../../features/group/domain/usecases/send_group_message_use_case.dart';
 import '../../features/group/presentation/manager/chat_group_message/chat_group_message_bloc.dart';
 import '../../features/group/presentation/manager/group/group_bloc.dart';
 import '../../features/group/presentation/manager/groups/groups_cubit.dart';
+import '../../features/group/presentation/manager/members/group_members_cubit.dart';
+import '../../features/group/presentation/manager/messages/group_messages_cubit.dart';
 import '../../features/setting/data/datasource/setting_remote_data_source.dart';
 import '../../features/setting/data/repositories/setting_repository_imp.dart';
 import '../../features/setting/domain/repositories/settings_repository.dart';
 import '../../features/setting/domain/usecases/get_current_user_use_case.dart';
+import '../../features/setting/domain/usecases/update_push_token_use_case.dart';
 import '../../features/setting/presentation/manager/profile/profile_bloc.dart';
 import '../presentation/session/session_cubit.dart';
 import '../presentation/theme/theme_cubit.dart';
@@ -110,12 +117,15 @@ Future<void> init() async {
   getIt.registerLazySingleton(() => GetUsersStream(repository: getIt()));
   getIt.registerLazySingleton(() => GetMessagesStream(repository: getIt()));
   getIt.registerLazySingleton(() => GetChatsStream(repository: getIt()));
+  getIt.registerLazySingleton(() => GetUnreadCountStream(repository: getIt()));
   getIt.registerLazySingleton(() => GetGroupsStream(repository: getIt()));
   getIt
       .registerLazySingleton(() => GetGroupMessagesStream(repository: getIt()));
   getIt.registerLazySingleton(() => GetGroupUsersStream(repository: getIt()));
   getIt.registerLazySingleton(() => GetContactsStream(repository: getIt()));
   getIt.registerLazySingleton(() => GetCurrentUserStream(repository: getIt()));
+  getIt.registerLazySingleton(
+      () => UpdatePushTokenUseCase(repository: getIt()));
   getIt.registerLazySingleton(() => GetAuthStateStream(repository: getIt()));
   getIt.registerLazySingleton(() => SignOutUseCase(repository: getIt()));
   getIt.registerLazySingleton(
@@ -162,10 +172,35 @@ Future<void> init() async {
         getCurrentUserStream: getIt(),
         updateActiveUseCase: getIt(),
         signOutUseCase: getIt(),
+        updatePushTokenUseCase: getIt(),
       ));
   getIt.registerFactory(() => ChatsCubit(getChatsStream: getIt()));
   getIt.registerFactory(() => GroupsCubit(getGroupsStream: getIt()));
   getIt.registerFactory(() => ContactsCubit(getContactsStream: getIt()));
+  // stream-read cubits (created per screen with a parameter)
+  getIt.registerFactoryParam<MessagesCubit, String, void>(
+    (roomId, _) =>
+        MessagesCubit(getMessagesStream: getIt(), roomId: roomId),
+  );
+  getIt.registerFactoryParam<GroupMessagesCubit, String, void>(
+    (groupId, _) => GroupMessagesCubit(
+      getGroupMessagesStream: getIt(),
+      groupId: groupId,
+    ),
+  );
+  getIt.registerFactoryParam<GroupMembersCubit, List<String>, void>(
+    (memberIds, _) => GroupMembersCubit(
+      getGroupUsersStream: getIt(),
+      memberIds: memberIds,
+    ),
+  );
+  getIt.registerFactoryParam<UsersCubit, List<String>, void>(
+    (userIds, _) => UsersCubit(getUsersStream: getIt(), userIds: userIds),
+  );
+  getIt.registerFactoryParam<UnreadCountCubit, String, void>(
+    (roomId, _) =>
+        UnreadCountCubit(getUnreadCountStream: getIt(), roomId: roomId),
+  );
 
   await getIt<ThemeCubit>().loadPreferences();
 }

@@ -1,9 +1,5 @@
 import 'dart:io';
 
-import 'package:chat_app/core/utils/helper_functions.dart';
-import 'package:chat_app/features/auth/domain/entities/user_entity.dart';
-import 'package:chat_app/features/chat/data/models/message_model.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -11,7 +7,12 @@ import 'package:iconsax/iconsax.dart';
 
 import '../../../../core/di/injection.dart';
 import '../../../../core/utils/date_format.dart';
+import '../../../../core/utils/helper_functions.dart';
+import '../../../auth/domain/entities/user_entity.dart';
+import '../../domain/entities/message_entity.dart';
 import '../manager/chat_message/chat_message_bloc.dart';
+import '../manager/messages/messages_cubit.dart';
+import '../manager/users/users_cubit.dart';
 import '../widgets/chat_message_card.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -41,8 +42,18 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => getIt<ChatMessageBloc>(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (context) => getIt<ChatMessageBloc>()),
+        BlocProvider(
+          create: (context) =>
+              getIt<MessagesCubit>(param1: widget.roomId),
+        ),
+        BlocProvider(
+          create: (context) =>
+              getIt<UsersCubit>(param1: [widget.userInfo.id]),
+        ),
+      ],
       child: ChatScreenBody(
         widget: widget,
         messageController: messageController,
@@ -83,20 +94,21 @@ class _ChatScreenBodyState extends State<ChatScreenBody> {
               widget.widget.userInfo.name,
               style: Theme.of(context).textTheme.labelLarge,
             ),
-            StreamBuilder(
-              stream: FirebaseFirestore.instance
-                  .collection('users')
-                  .doc(widget.widget.userInfo.id)
-                  .snapshots(),
-              builder: (context, snapshot) {
+            BlocBuilder<UsersCubit, UsersState>(
+              builder: (context, state) {
+                if (state is! UsersLoaded || state.users.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+                final peer = state.users.first;
+                final online = peer.online;
+                final lastActivated = peer.lastActivated ?? '';
+                final lastSeen = lastActivated.isEmpty
+                    ? ''
+                    : 'Last seen ${AppDateTimeFormatter.dateAndTime(lastActivated)} at ${AppDateTimeFormatter.timeDate(lastActivated)}';
                 return Text(
-                  snapshot.data?.data()?['online'] == true
-                      ? 'Online'
-                      : 'Last seen ${AppDateTimeFormatter.dateAndTime(widget.widget.userInfo.lastActivated!)} at ${AppDateTimeFormatter.timeDate(widget.widget.userInfo.lastActivated!)}',
+                  online ? 'Online' : lastSeen,
                   style: Theme.of(context).textTheme.labelSmall!.copyWith(
-                        color: snapshot.data?.data()?['online'] == true
-                            ? Colors.green
-                            : Colors.grey,
+                        color: online ? Colors.green : Colors.grey,
                       ),
                 );
               },
@@ -138,124 +150,110 @@ class _ChatScreenBodyState extends State<ChatScreenBody> {
         child: Column(
           children: [
             Expanded(
-              child: StreamBuilder(
-                  stream: FirebaseFirestore.instance
-                      .collection('rooms')
-                      .doc(widget.widget.roomId)
-                      .collection('messages')
-                      .snapshots(),
-                  builder: (context, snapshot) {
-                    if (snapshot.hasData) {
-                      List<MessageModel> messages = snapshot.data!.docs
-                          .map(
-                            (e) => MessageModel.fromJson(e.data()),
-                          )
-                          .toList()
-                        ..sort(
-                          (a, b) => b.createdAt!.compareTo(a.createdAt!),
-                        );
-                      return messages.isNotEmpty
-                          ? ListView.builder(
-                              reverse: true,
-                              itemCount: messages.length,
-                              itemBuilder: (context, index) {
-                                return GestureDetector(
-                                  onTap: () {
-                                    if (selectedMessages.isNotEmpty) {
-                                      setState(() {
-                                        selectedMessages
-                                                .contains(messages[index].id)
-                                            ? selectedMessages
-                                                .remove(messages[index].id)
-                                            : selectedMessages
-                                                .add(messages[index].id!);
-                                      });
-                                    }
-                                    if (copyMessages.isNotEmpty) {
-                                      setState(() {
-                                        messages[index].type == 'text'
-                                            ? copyMessages.contains(
-                                                    messages[index].message)
-                                                ? copyMessages.remove(
-                                                    messages[index].message)
-                                                : copyMessages.add(
-                                                    messages[index].message!)
-                                            : null;
-                                        print(copyMessages);
-                                      });
-                                    }
-                                  },
-                                  onLongPress: () {
-                                    setState(() {
-                                      selectedMessages
-                                              .contains(messages[index].id)
-                                          ? selectedMessages
-                                              .remove(messages[index].id)
-                                          : selectedMessages
-                                              .add(messages[index].id!);
-
-                                      messages[index].type == 'text'
-                                          ? copyMessages.contains(
-                                                  messages[index].message)
-                                              ? copyMessages.remove(
-                                                  messages[index].message)
-                                              : copyMessages
-                                                  .add(messages[index].message!)
-                                          : null;
-                                    });
-                                  },
-                                  child: ChatMessageCard(
-                                    messageInfo: messages[index],
-                                    roomId: widget.widget.roomId,
-                                    isSelected: selectedMessages
-                                        .contains(messages[index].id),
-                                  ),
-                                );
+              child: BlocBuilder<MessagesCubit, MessagesState>(
+                  builder: (context, state) {
+                if (state is MessagesLoaded) {
+                  final List<MessageEntity> messages = state.messages;
+                  return messages.isNotEmpty
+                      ? ListView.builder(
+                          reverse: true,
+                          itemCount: messages.length,
+                          itemBuilder: (context, index) {
+                            return GestureDetector(
+                              onTap: () {
+                                if (selectedMessages.isNotEmpty) {
+                                  setState(() {
+                                    selectedMessages
+                                            .contains(messages[index].id)
+                                        ? selectedMessages
+                                            .remove(messages[index].id)
+                                        : selectedMessages
+                                            .add(messages[index].id);
+                                  });
+                                }
+                                if (copyMessages.isNotEmpty) {
+                                  setState(() {
+                                    messages[index].type == 'text'
+                                        ? copyMessages.contains(
+                                                messages[index].message)
+                                            ? copyMessages.remove(
+                                                messages[index].message)
+                                            : copyMessages.add(
+                                                messages[index].message)
+                                        : null;
+                                  });
+                                }
                               },
-                            )
-                          : Center(
-                              child: GestureDetector(
-                                onTap: () {
-                                  context.read<ChatMessageBloc>().add(
-                                        SendMessageEvent(
-                                          roomId: widget.widget.roomId,
-                                          message: 'Assalamu Alaikum 👋',
-                                          userInfo: widget.widget.userInfo,
-                                        ),
-                                      );
-                                },
-                                child: Card(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(12.0),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          "👋",
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .displayMedium,
-                                        ),
-                                        SizedBox(
-                                          height: 16,
-                                        ),
-                                        Text(
-                                          "Say Assalamu Alaikum",
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyMedium,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
+                              onLongPress: () {
+                                setState(() {
+                                  selectedMessages
+                                          .contains(messages[index].id)
+                                      ? selectedMessages
+                                          .remove(messages[index].id)
+                                      : selectedMessages
+                                          .add(messages[index].id);
+
+                                  messages[index].type == 'text'
+                                      ? copyMessages
+                                              .contains(messages[index].message)
+                                          ? copyMessages.remove(
+                                              messages[index].message)
+                                          : copyMessages
+                                              .add(messages[index].message)
+                                      : null;
+                                });
+                              },
+                              child: ChatMessageCard(
+                                messageInfo: messages[index],
+                                roomId: widget.roomId,
+                                isSelected:
+                                    selectedMessages.contains(messages[index].id),
                               ),
                             );
-                    }
-                    return Container();
-                  }),
+                          },
+                        )
+                      : Center(
+                          child: GestureDetector(
+                            onTap: () {
+                              context.read<ChatMessageBloc>().add(
+                                    SendMessageEvent(
+                                      roomId: widget.roomId,
+                                      message: 'Assalamu Alaikum 👋',
+                                      userInfo: widget.widget.userInfo,
+                                    ),
+                                  );
+                            },
+                            child: Card(
+                              child: Padding(
+                                padding: const EdgeInsets.all(12.0),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      "👋",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .displayMedium,
+                                    ),
+                                    const SizedBox(
+                                      height: 16,
+                                    ),
+                                    Text(
+                                      "Say Assalamu Alaikum",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                }
+                return Container();
+              }),
             ),
             Row(
               children: [
@@ -283,7 +281,7 @@ class _ChatScreenBodyState extends State<ChatScreenBody> {
                                   context.read<ChatMessageBloc>().add(
                                         SendImageEvent(
                                           userInfo: widget.widget.userInfo,
-                                          roomId: widget.widget.roomId,
+                                          roomId: widget.roomId,
                                           fileImage: bytes,
                                           fileExtension:
                                               image.path.split('.').last,
@@ -309,7 +307,7 @@ class _ChatScreenBodyState extends State<ChatScreenBody> {
                       context.read<ChatMessageBloc>().add(
                             SendMessageEvent(
                               userInfo: widget.widget.userInfo,
-                              roomId: widget.widget.roomId,
+                              roomId: widget.roomId,
                               message: widget.messageController.text,
                             ),
                           );

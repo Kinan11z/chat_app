@@ -31,5 +31,6 @@ abstract class ChatRepository {
   });
   Stream<List<ChatRoomEntity>> getChats();
   Stream<List<MessageEntity>> getMessages({required String roomId});
+  Stream<int> getUnreadCount({required String roomId});
   Stream<List<UserEntity>> getUsers({required List<String> ids});
 }

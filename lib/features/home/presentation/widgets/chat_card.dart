@@ -1,13 +1,14 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:chat_app/features/auth/data/models/user_model.dart';
-import 'package:chat_app/features/auth/domain/entities/user_entity.dart';
-import 'package:chat_app/features/chat/data/models/message_model.dart';
-import 'package:chat_app/features/chat/domain/entities/chat_room_entity.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/di/injection.dart';
+import '../../../../core/presentation/session/session_cubit.dart';
 import '../../../../core/utils/date_format.dart';
+import '../../../auth/domain/entities/user_entity.dart';
+import '../../../chat/domain/entities/chat_room_entity.dart';
+import '../../../chat/presentation/manager/unread/unread_count_cubit.dart';
+import '../../../chat/presentation/manager/users/users_cubit.dart';
 import '../../../chat/presentation/screens/chat_screen.dart';
 
 class ChatCard extends StatelessWidget {
@@ -18,91 +19,73 @@ class ChatCard extends StatelessWidget {
   final ChatRoomEntity item;
   @override
   Widget build(BuildContext context) {
-    final List members = item.members
-        .where(
-          (element) => element != FirebaseAuth.instance.currentUser!.uid,
-        )
-        .toList();
-    String userId = members.isEmpty
-        ? FirebaseAuth.instance.currentUser!.uid
-        : members.first;
-    return StreamBuilder(
-      stream: FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.hasData) {
-          final UserEntity userInfo =
-              UserModel.fromJson(snapshot.data!.data()!).toEntity();
+    final myId = getIt<SessionCubit>().state.user?.id ?? '';
+    final List<String> members =
+        item.members.where((element) => element != myId).toList();
+    String userId = members.isEmpty ? myId : members.first;
+    return BlocProvider(
+      create: (context) => getIt<UsersCubit>(param1: [userId]),
+      child: BlocBuilder<UsersCubit, UsersState>(
+        builder: (context, state) {
+          if (state is! UsersLoaded || state.users.isEmpty) {
+            return Container();
+          }
+          final UserEntity userInfo = state.users.first;
 
-          return Card(
-            child: ListTile(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ChatScreen(
-                      userInfo: userInfo,
-                      roomId: item.id,
+          return BlocProvider(
+            create: (context) => getIt<UnreadCountCubit>(param1: item.id),
+            child: BlocBuilder<UnreadCountCubit, UnreadCountState>(
+              builder: (context, unreadState) {
+                final unreadCount =
+                    unreadState is UnreadCountLoaded ? unreadState.count : 0;
+                return Card(
+                  child: ListTile(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ChatScreen(
+                            userInfo: userInfo,
+                            roomId: item.id,
+                          ),
+                        ),
+                      );
+                    },
+                    leading: CircleAvatar(
+                      backgroundColor: Colors.grey,
+                      backgroundImage:
+                          (userInfo.imageUrl?.isNotEmpty ?? false)
+                              ? CachedNetworkImageProvider(userInfo.imageUrl!)
+                              : null,
+                      child: (userInfo.imageUrl?.isEmpty ?? true)
+                          ? Text(userInfo.name.characters.first)
+                          : null,
                     ),
+                    title: Text(userInfo.name),
+                    subtitle: Text(
+                      item.lastMessage == ''
+                          ? userInfo.about ?? ''
+                          : item.lastMessage,
+                      style: Theme.of(context).textTheme.labelSmall,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    trailing: unreadCount > 0
+                        ? Badge(label: Text(unreadCount.toString()))
+                        : Text(
+                            item.lastMessageTime.isEmpty
+                                ? ''
+                                : AppDateTimeFormatter.dateAndTime(
+                                    item.lastMessageTime,
+                                  ),
+                          ),
                   ),
                 );
               },
-              leading: CircleAvatar(
-                backgroundImage:
-                    CachedNetworkImageProvider(userInfo.imageUrl ?? ''),
-                backgroundColor: Colors.grey,
-                child: (userInfo.imageUrl == '' || userInfo.imageUrl!.isEmpty)
-                    ? Text(userInfo.name.characters.first)
-                    : null,
-              ),
-              title: Text(userInfo.name),
-              subtitle: Text(
-                item.lastMessage == ''
-                    ? userInfo.about ?? ''
-                    : item.lastMessage,
-                style: Theme.of(context).textTheme.labelSmall,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              trailing: StreamBuilder(
-                stream: FirebaseFirestore.instance
-                    .collection('rooms')
-                    .doc(item.id)
-                    .collection('messages')
-                    .snapshots(),
-                builder: (context, snapshot) {
-                  List<MessageModel> unreadMessages = snapshot.data?.docs
-                          .map(
-                            (e) => MessageModel.fromJson(e.data()),
-                          )
-                          .where(
-                            (element) => element.read == '',
-                          )
-                          .where(
-                            (element) =>
-                                element.fromId !=
-                                FirebaseAuth.instance.currentUser?.uid,
-                          )
-                          .toList() ??
-                      [];
-                  return unreadMessages.isNotEmpty
-                      ? Badge(
-                          label: Text(unreadMessages.length.toString()),
-                        )
-                      : Text(
-                          AppDateTimeFormatter.dateAndTime(
-                            item.lastMessageTime,
-                          ),
-                        );
-                },
-              ),
             ),
           );
-        }
-        return Container();
-      },
+        },
+      ),
     );
   }
 }

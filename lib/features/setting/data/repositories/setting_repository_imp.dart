@@ -54,6 +54,18 @@ class SettingsRepositoryImp implements SettingsRepository {
   }
 
   @override
+  Future<Either<Failure, void>> updatePushToken({required String token}) async {
+    try {
+      await remoteDataSource.updatePushToken(token: token);
+      return const Right(null);
+    } on FirebaseAuthException catch (e) {
+      return Left(AuthFailure(e.toString()));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
   Stream<UserEntity> getCurrentUser() {
     return remoteDataSource.getCurrentUser().map((m) => m.toEntity());
   }

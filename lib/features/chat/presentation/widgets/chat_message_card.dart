@@ -1,12 +1,13 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:iconsax/iconsax.dart';
 
+import '../../../../core/di/injection.dart';
+import '../../../../core/presentation/session/session_cubit.dart';
 import '../../../../core/utils/helper_functions.dart';
 import '../../../../core/utils/photo_view.dart';
-import '../../data/models/message_model.dart';
+import '../../domain/entities/message_entity.dart';
 import '../manager/chat_message/chat_message_bloc.dart';
 
 class ChatMessageCard extends StatelessWidget {
@@ -15,13 +16,14 @@ class ChatMessageCard extends StatelessWidget {
       required this.messageInfo,
       required this.roomId,
       required this.isSelected});
-  final MessageModel messageInfo;
+  final MessageEntity messageInfo;
   final String roomId;
   final bool isSelected;
 
   @override
   Widget build(BuildContext context) {
-    bool isMe = messageInfo.fromId == FirebaseAuth.instance.currentUser?.uid;
+    final myId = getIt<SessionCubit>().state.user?.id ?? '';
+    bool isMe = messageInfo.fromId == myId;
     return ChatMessageCardBody(
       isMe: isMe,
       messageInfo: messageInfo,
@@ -41,7 +43,7 @@ class ChatMessageCardBody extends StatefulWidget {
   });
 
   final bool isMe;
-  final MessageModel messageInfo;
+  final MessageEntity messageInfo;
   final String roomId;
   final bool isSelected;
 
@@ -54,11 +56,13 @@ class _ChatMessageCardBodyState extends State<ChatMessageCardBody> {
   void initState() {
     super.initState();
 
-    if (widget.messageInfo.toId == FirebaseAuth.instance.currentUser!.uid) {
+    if (!widget.isMe &&
+        widget.messageInfo.id.isNotEmpty &&
+        widget.messageInfo.read.isEmpty) {
       context.read<ChatMessageBloc>().add(
             ReadMessageEvent(
               roomId: widget.roomId,
-              messageId: widget.messageInfo.id!,
+              messageId: widget.messageInfo.id,
             ),
           );
     }
@@ -112,12 +116,15 @@ class _ChatMessageCardBodyState extends State<ChatMessageCardBody> {
                                 MaterialPageRoute(
                                   builder: (context) => PhotoViewScreen(
                                     imageProvider: NetworkImage(
-                                        widget.messageInfo.message ?? ''),
+                                        widget.messageInfo.message),
                                   ),
                                 ),
                               ),
                               child: CachedNetworkImage(
-                                imageUrl: widget.messageInfo.message ?? '',
+                                height: 260,
+                                width: MediaQuery.of(context).size.width * 0.6,
+                                fit: BoxFit.cover,
+                                imageUrl: widget.messageInfo.message,
                                 placeholder: (context, url) => const Center(
                                   child: CircularProgressIndicator(),
                                 ),
@@ -126,7 +133,7 @@ class _ChatMessageCardBodyState extends State<ChatMessageCardBody> {
                           ),
                         )
                       : Text(
-                          widget.messageInfo.message ?? '',
+                          widget.messageInfo.message,
                           style: Theme.of(context)
                               .textTheme
                               .labelLarge
@@ -141,14 +148,14 @@ class _ChatMessageCardBodyState extends State<ChatMessageCardBody> {
                     children: [
                       Text(
                         HelperFunctions.localDateTime(
-                            widget.messageInfo.createdAt ?? ''),
+                            widget.messageInfo.createdAt),
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
                               color: widget.isMe
                                   ? Theme.of(context).colorScheme.onSurface
                                   : Theme.of(context).colorScheme.surface,
                             ),
                       ),
-                      SizedBox(
+                      const SizedBox(
                         width: 6,
                       ),
                       widget.isMe
@@ -159,7 +166,7 @@ class _ChatMessageCardBodyState extends State<ChatMessageCardBody> {
                                   : Colors.blueAccent,
                               size: 18,
                             )
-                          : SizedBox(),
+                          : const SizedBox(),
                     ],
                   ),
                 ],

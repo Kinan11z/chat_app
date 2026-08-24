@@ -1,12 +1,12 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chat_app/features/chat/presentation/manager/chat_room/chat_room_bloc.dart';
 import 'package:chat_app/features/chat/presentation/screens/chat_screen.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:iconsax/iconsax.dart';
 
 import '../../../../core/di/injection.dart';
+import '../../../../core/presentation/session/session_cubit.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 
 class ContactCard extends StatelessWidget {
@@ -20,20 +20,23 @@ class ContactCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final chatRoomBloc = getIt<ChatRoomBloc>();
-    List<String> roomId = [user.id!, FirebaseAuth.instance.currentUser!.uid]
+    final myId = getIt<SessionCubit>().state.user?.id ?? '';
+    List<String> roomId = [user.id, myId]
       ..sort(
         (a, b) => a.compareTo(b),
       );
     return Card(
       child: ListTile(
         leading: CircleAvatar(
-          backgroundImage: CachedNetworkImageProvider(user.imageUrl ?? ''),
           backgroundColor: Colors.grey,
-          child: (user.imageUrl == '' || user.imageUrl!.isEmpty)
-              ? Text(user.name!.characters.first)
+          backgroundImage: (user.imageUrl?.isNotEmpty ?? false)
+              ? CachedNetworkImageProvider(user.imageUrl!)
+              : null,
+          child: (user.imageUrl?.isEmpty ?? true)
+              ? Text(user.name.characters.first)
               : null,
         ),
-        title: Text(user.name ?? ''),
+        title: Text(user.name),
         subtitle: Text(user.about ?? ''),
         trailing: BlocConsumer<ChatRoomBloc, ChatRoomState>(
           bloc: chatRoomBloc,
@@ -53,7 +56,7 @@ class ContactCard extends StatelessWidget {
           builder: (context, state) {
             return IconButton(
               onPressed: () {
-                chatRoomBloc.add(CreateChatRoomEvent(email: user.email!));
+                chatRoomBloc.add(CreateChatRoomEvent(email: user.email));
               },
               icon: state is ChatRoomLoadding
                   ? const CircularProgressIndicator()

@@ -15,5 +15,6 @@ abstract class SettingsRepository {
     required Uint8List? imageFile,
     required String fileExtension,
   });
+  Future<Either<Failure, void>> updatePushToken({required String token});
   Stream<UserEntity> getCurrentUser();
 }

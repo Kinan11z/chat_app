@@ -123,6 +123,11 @@ class ChatRepositoryImp implements ChatRepository {
   }
 
   @override
+  Stream<int> getUnreadCount({required String roomId}) {
+    return remoteDataSource.getUnreadCount(roomId: roomId);
+  }
+
+  @override
   Stream<List<UserEntity>> getUsers({required List<String> ids}) {
     return remoteDataSource.getUsers(ids: ids).map(
           (models) => models

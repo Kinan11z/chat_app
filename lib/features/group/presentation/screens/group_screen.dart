@@ -1,16 +1,16 @@
 import 'dart:io';
 
-import 'package:chat_app/core/di/injection.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:iconsax/iconsax.dart';
 
+import '../../../../core/di/injection.dart';
+import '../../../../core/presentation/session/session_cubit.dart';
 import '../../../../core/utils/helper_functions.dart';
-import '../../data/models/group_message_model.dart';
 import '../../domain/entities/chat_group_entity.dart';
 import '../manager/chat_group_message/chat_group_message_bloc.dart';
+import '../manager/members/group_members_cubit.dart';
+import '../manager/messages/group_messages_cubit.dart';
 import '../widgets/group_message_card.dart';
 import 'edit_group_screen.dart';
 
@@ -39,8 +39,18 @@ class _GroupScreenState extends State<GroupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => getIt<ChatGroupMessageBloc>(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (context) => getIt<ChatGroupMessageBloc>()),
+        BlocProvider(
+          create: (context) =>
+              getIt<GroupMessagesCubit>(param1: widget.groupInfo.id),
+        ),
+        BlocProvider(
+          create: (context) =>
+              getIt<GroupMembersCubit>(param1: widget.groupInfo.members),
+        ),
+      ],
       child: BlocConsumer<ChatGroupMessageBloc, ChatGroupMessageState>(
         listener: (context, state) {
           if (state is ChatGroupMessageSuccess) {
@@ -65,32 +75,26 @@ class _GroupScreenState extends State<GroupScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      widget.groupInfo.name.toString(),
+                      widget.groupInfo.name,
                       style: Theme.of(context).textTheme.labelLarge,
                     ),
-                    StreamBuilder(
-                        stream: FirebaseFirestore.instance
-                            .collection('users')
-                            .where('id', whereIn: widget.groupInfo.members)
-                            .snapshots(),
-                        builder: (context, snapshot) {
-                          List<String> memberNames = [];
-                          for (var element in snapshot.data?.docs ?? []) {
-                            if (element['id'] !=
-                                FirebaseAuth.instance.currentUser!.uid) {
-                              memberNames.add(element['name']);
-                            }
-                          }
-
-                          if (snapshot.hasData) {
-                            return Text(
-                              memberNames.join(', '),
-                              style: Theme.of(context).textTheme.labelSmall,
-                            );
-                          } else {
-                            return Container();
-                          }
-                        }),
+                    BlocBuilder<GroupMembersCubit, GroupMembersState>(
+                      builder: (context, membersState) {
+                        if (membersState is! GroupMembersLoaded) {
+                          return Container();
+                        }
+                        final myId =
+                            context.read<SessionCubit>().state.user?.id ?? '';
+                        final memberNames = membersState.members
+                            .where((member) => member.id != myId)
+                            .map((member) => member.name)
+                            .toList();
+                        return Text(
+                          memberNames.join(', '),
+                          style: Theme.of(context).textTheme.labelSmall,
+                        );
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -110,37 +114,41 @@ class _GroupScreenState extends State<GroupScreen> {
               child: Column(
                 children: [
                   Expanded(
-                    child: StreamBuilder(
-                        stream: FirebaseFirestore.instance
-                            .collection('groups')
-                            .doc(widget.groupInfo.id)
-                            .collection('messages')
-                            .snapshots(),
-                        builder: (context, snapshot) {
-                          if (snapshot.hasData) {
-                            List<GroupMessageModel> groupMessages = snapshot
-                                .data!.docs
-                                .map(
-                                  (e) => GroupMessageModel.fromJson(e.data()),
-                                )
-                                .toList()
-                              ..sort(
-                                (a, b) => b.createdAt!.compareTo(a.createdAt!),
+                    child:
+                        BlocBuilder<GroupMembersCubit, GroupMembersState>(
+                      builder: (context, membersState) {
+                        final senderNames =
+                            membersState is GroupMembersLoaded
+                                ? {
+                                    for (final member
+                                        in membersState.members)
+                                      member.id: member.name,
+                                  }
+                                : const <String, String>{};
+                        return BlocBuilder<GroupMessagesCubit,
+                            GroupMessagesState>(
+                          builder: (context, messagesState) {
+                            if (messagesState is GroupMessagesLoaded) {
+                              return ListView.builder(
+                                reverse: true,
+                                itemCount: messagesState.messages.length,
+                                itemBuilder: (context, index) {
+                                  final message =
+                                      messagesState.messages[index];
+                                  return GroupMessageCard(
+                                    messageInfo: message,
+                                    senderName:
+                                        senderNames[message.fromId] ?? '',
+                                    isSelected: false,
+                                  );
+                                },
                               );
-                            return ListView.builder(
-                              reverse: true,
-                              itemCount: groupMessages.length,
-                              itemBuilder: (context, index) {
-                                return GroupMessageCard(
-                                  messageInfo: groupMessages[index],
-                                  isSelected: false,
-                                );
-                              },
-                            );
-                          } else {
+                            }
                             return Container();
-                          }
-                        }),
+                          },
+                        );
+                      },
+                    ),
                   ),
                   Row(
                     children: [
@@ -193,14 +201,16 @@ class _GroupScreenState extends State<GroupScreen> {
                       ),
                       IconButton.filled(
                         onPressed: () {
-                          BlocProvider.of<ChatGroupMessageBloc>(context).add(
-                            SendMessageGroupEvent(
-                              message: messageController.text,
-                              groupInfo: widget.groupInfo,
-                            ),
-                          );
+                          if (messageController.text != '') {
+                            BlocProvider.of<ChatGroupMessageBloc>(context).add(
+                              SendMessageGroupEvent(
+                                message: messageController.text,
+                                groupInfo: widget.groupInfo,
+                              ),
+                            );
+                          }
                         },
-                        icon: Icon(Iconsax.send_1),
+                        icon: const Icon(Iconsax.send_1),
                       ),
                     ],
                   ),
