@@ -20,6 +20,7 @@ class CreateChatBottomSheet extends StatefulWidget {
 class _CreateChatBottomSheetState extends State<CreateChatBottomSheet> {
   late TextEditingController emailController;
   GlobalKey<FormState> formKey = GlobalKey<FormState>();
+
   @override
   void initState() {
     super.initState();
@@ -28,18 +29,20 @@ class _CreateChatBottomSheetState extends State<CreateChatBottomSheet> {
 
   @override
   void dispose() {
-    super.dispose();
     emailController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final muted = scheme.onSurface.withOpacity(0.55);
+
     return BlocProvider(
       create: (context) => getIt<ChatRoomBloc>(),
       child: BlocListener<ChatRoomBloc, ChatRoomState>(
         listener: (context, state) {
           if (state is ChatRoomSuccess) {
-            // emailController.text = '';
             Navigator.pop(context);
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(state.message)),
@@ -50,60 +53,104 @@ class _CreateChatBottomSheetState extends State<CreateChatBottomSheet> {
             );
           }
         },
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          child: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      "Enter Friend Email",
-                      style: Theme.of(context).textTheme.bodyLarge,
+        child: Padding(
+          padding:
+              EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+          child: Container(
+            decoration: BoxDecoration(
+              color: scheme.surface,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(28),
+              ),
+            ),
+            padding: const EdgeInsets.fromLTRB(24, 12, 24, 28),
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 44,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: scheme.onSurface.withOpacity(0.20),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
-                    const Spacer(),
-                    IconButton.filled(
-                      onPressed: () {},
-                      icon: const Icon(Iconsax.scan_barcode),
-                    )
-                  ],
-                ),
-                const SizedBox(
-                  height: 12,
-                ),
-                AppTextField(
-                  controller: emailController,
-                  prefixIcon: const Icon(Iconsax.direct),
-                  label: "Email",
-                  validator: Validators.email,
-                ),
-                const SizedBox(
-                  height: 16,
-                ),
-                BlocBuilder<ChatRoomBloc, ChatRoomState>(
-                  builder: (context, state) {
-                    if (state is ChatRoomLoadding) {
-                      return const Center(
-                        child: CircularProgressIndicator(),
+                  ),
+                  const SizedBox(height: 22),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'New Chat',
+                          style: TextStyle(
+                            fontSize: 19,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.3,
+                            color: scheme.onSurface,
+                          ),
+                        ),
+                      ),
+                      Material(
+                        color: scheme.onSurface.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(14),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(14),
+                          onTap: () {},
+                          child: Padding(
+                            padding: const EdgeInsets.all(11),
+                            child: Icon(
+                              Iconsax.scan_barcode,
+                              size: 22,
+                              color: scheme.primary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      "Enter your friend's email to start chatting",
+                      style: TextStyle(fontSize: 13, color: muted),
+                    ),
+                  ),
+                  const SizedBox(height: 22),
+                  AppTextField(
+                    controller: emailController,
+                    prefixIcon: Icon(Iconsax.sms, size: 20, color: muted),
+                    label: 'Email',
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.done,
+                    autofillHints: const [AutofillHints.email],
+                    validator: Validators.email,
+                  ),
+                  const SizedBox(height: 20),
+                  BlocBuilder<ChatRoomBloc, ChatRoomState>(
+                    builder: (context, state) {
+                      return AppButton(
+                        isLoading: state is ChatRoomLoadding,
+                        onPressed: state is ChatRoomLoadding
+                            ? null
+                            : () {
+                                if (formKey.currentState!.validate()) {
+                                  context.read<ChatRoomBloc>().add(
+                                        CreateChatRoomEvent(
+                                          email: emailController.text,
+                                        ),
+                                      );
+                                }
+                              },
+                        text: 'Create Chat',
                       );
-                    }
-                    return AppButton(
-                      onPressed: () {
-                        if (formKey.currentState!.validate()) {
-                          context.read<ChatRoomBloc>().add(
-                                CreateChatRoomEvent(
-                                  email: emailController.text,
-                                ),
-                              );
-                        }
-                      },
-                      text: 'Create Chat',
-                    );
-                  },
-                )
-              ],
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
         ),

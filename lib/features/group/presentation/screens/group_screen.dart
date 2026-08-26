@@ -2,11 +2,12 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:iconsax/iconsax.dart';
 
 import '../../../../core/di/injection.dart';
 import '../../../../core/presentation/session/session_cubit.dart';
 import '../../../../core/utils/helper_functions.dart';
+import '../../../../core/utils/widgets/chat_composer.dart';
+import '../../../home/presentation/widgets/fallback_avatar.dart';
 import '../../domain/entities/chat_group_entity.dart';
 import '../manager/chat_group_message/chat_group_message_bloc.dart';
 import '../manager/members/group_members_cubit.dart';
@@ -60,6 +61,7 @@ class _GroupScreenState extends State<GroupScreen> {
         builder: (context, state) {
           return Scaffold(
             appBar: AppBar(
+              toolbarHeight: 72,
               title: GestureDetector(
                 onTap: () {
                   Navigator.push(
@@ -71,151 +73,131 @@ class _GroupScreenState extends State<GroupScreen> {
                     ),
                   );
                 },
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
                   children: [
-                    Text(
-                      widget.groupInfo.name,
-                      style: Theme.of(context).textTheme.labelLarge,
+                    FallbackAvatar(
+                      name: widget.groupInfo.name,
+                      imageUrl: widget.groupInfo.image,
+                      radius: 19,
                     ),
-                    BlocBuilder<GroupMembersCubit, GroupMembersState>(
-                      builder: (context, membersState) {
-                        if (membersState is! GroupMembersLoaded) {
-                          return Container();
-                        }
-                        final myId =
-                            context.read<SessionCubit>().state.user?.id ?? '';
-                        final memberNames = membersState.members
-                            .where((member) => member.id != myId)
-                            .map((member) => member.name)
-                            .toList();
-                        return Text(
-                          memberNames.join(', '),
-                          style: Theme.of(context).textTheme.labelSmall,
-                        );
-                      },
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.groupInfo.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.2,
+                            ),
+                          ),
+                          BlocBuilder<GroupMembersCubit, GroupMembersState>(
+                            builder: (context, membersState) {
+                              if (membersState is! GroupMembersLoaded) {
+                                return const SizedBox.shrink();
+                              }
+                              final myId = context
+                                      .read<SessionCubit>()
+                                      .state
+                                      .user
+                                      ?.id ??
+                                  '';
+                              final memberNames = membersState.members
+                                  .where((member) => member.id != myId)
+                                  .map((member) => member.name)
+                                  .toList();
+                              return Text(
+                                memberNames.join(', '),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurface
+                                      .withOpacity(0.5),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
               ),
-              actions: [
-                IconButton(
-                  onPressed: () {},
-                  icon: const Icon(Iconsax.trash),
-                ),
-                IconButton(
-                  onPressed: () {},
-                  icon: const Icon(Iconsax.copy),
-                ),
-              ],
             ),
-            body: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                children: [
-                  Expanded(
-                    child:
-                        BlocBuilder<GroupMembersCubit, GroupMembersState>(
-                      builder: (context, membersState) {
-                        final senderNames =
-                            membersState is GroupMembersLoaded
-                                ? {
-                                    for (final member
-                                        in membersState.members)
-                                      member.id: member.name,
-                                  }
-                                : const <String, String>{};
-                        return BlocBuilder<GroupMessagesCubit,
-                            GroupMessagesState>(
-                          builder: (context, messagesState) {
-                            if (messagesState is GroupMessagesLoaded) {
-                              return ListView.builder(
-                                reverse: true,
-                                itemCount: messagesState.messages.length,
-                                itemBuilder: (context, index) {
-                                  final message =
-                                      messagesState.messages[index];
-                                  return GroupMessageCard(
-                                    messageInfo: message,
-                                    senderName:
-                                        senderNames[message.fromId] ?? '',
-                                    isSelected: false,
-                                  );
-                                },
-                              );
-                            }
-                            return Container();
-                          },
-                        );
-                      },
-                    ),
-                  ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Card(
-                          child: TextField(
-                            controller: messageController,
-                            maxLines: 5,
-                            minLines: 1,
-                            decoration: InputDecoration(
-                              suffixIcon: Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  IconButton(
-                                    onPressed: () {},
-                                    icon: const Icon(Iconsax.emoji_happy),
-                                  ),
-                                  IconButton(
-                                    onPressed: () async {
-                                      File? image =
-                                          await HelperFunctions.pickImage();
-                                      if (image != null) {
-                                        final bytes = await image.readAsBytes();
-                                        context
-                                            .read<ChatGroupMessageBloc>()
-                                            .add(
-                                              SendImageGroupEvent(
-                                                imageFile: bytes,
-                                                groupInfo: widget.groupInfo,
-                                                fileExtension:
-                                                    image.path.split('.').last,
-                                              ),
-                                            );
-                                      }
-                                    },
-                                    icon: const Icon(Iconsax.camera),
-                                  ),
-                                ],
-                              ),
-                              border: InputBorder.none,
-                              hintText: "Message",
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 10,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      IconButton.filled(
-                        onPressed: () {
-                          if (messageController.text != '') {
-                            BlocProvider.of<ChatGroupMessageBloc>(context).add(
-                              SendMessageGroupEvent(
-                                message: messageController.text,
-                                groupInfo: widget.groupInfo,
-                              ),
+            body: Column(
+              children: [
+                Expanded(
+                  child: BlocBuilder<GroupMembersCubit, GroupMembersState>(
+                    builder: (context, membersState) {
+                      final senderNames =
+                          membersState is GroupMembersLoaded
+                              ? {
+                                  for (final member
+                                      in membersState.members)
+                                    member.id: member.name,
+                                }
+                              : const <String, String>{};
+                      return BlocBuilder<GroupMessagesCubit,
+                          GroupMessagesState>(
+                        builder: (context, messagesState) {
+                          if (messagesState is GroupMessagesLoaded) {
+                            return ListView.builder(
+                              reverse: true,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 10),
+                              itemCount: messagesState.messages.length,
+                              itemBuilder: (context, index) {
+                                final message =
+                                    messagesState.messages[index];
+                                return GroupMessageCard(
+                                  messageInfo: message,
+                                  senderName:
+                                      senderNames[message.fromId] ?? '',
+                                  isSelected: false,
+                                );
+                              },
                             );
                           }
+                          return const SizedBox.shrink();
                         },
-                        icon: const Icon(Iconsax.send_1),
-                      ),
-                    ],
+                      );
+                    },
                   ),
-                ],
-              ),
+                ),
+                ChatComposer(
+                  controller: messageController,
+                  onSend: () {
+                    if (messageController.text != '') {
+                      context.read<ChatGroupMessageBloc>().add(
+                            SendMessageGroupEvent(
+                              message: messageController.text,
+                              groupInfo: widget.groupInfo,
+                            ),
+                          );
+                    }
+                  },
+                  onPickImage: () async {
+                    File? image = await HelperFunctions.pickImage();
+                    if (image == null) return;
+                    final bytes = await image.readAsBytes();
+                    if (!context.mounted) return;
+                    context.read<ChatGroupMessageBloc>().add(
+                          SendImageGroupEvent(
+                            imageFile: bytes,
+                            groupInfo: widget.groupInfo,
+                            fileExtension: image.path.split('.').last,
+                          ),
+                        );
+                  },
+                ),
+              ],
             ),
           );
         },

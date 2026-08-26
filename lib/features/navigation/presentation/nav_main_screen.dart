@@ -51,7 +51,9 @@ class _NavMainScreenState extends State<NavMainScreen> {
   @override
   Widget build(BuildContext context) {
     final user = context.watch<SessionCubit>().state.user;
+    final scheme = Theme.of(context).colorScheme;
     return Scaffold(
+      extendBody: true,
       body: user == null
           ? const Center(child: CircularProgressIndicator())
           : PageView(
@@ -63,19 +65,44 @@ class _NavMainScreenState extends State<NavMainScreen> {
               },
               children: screens,
             ),
-      bottomNavigationBar: NavigationBar(
-        elevation: 0,
-        selectedIndex: currentIndex,
-        destinations: const [
-          NavigationDestination(icon: Icon(Iconsax.message), label: "Chat"),
-          NavigationDestination(icon: Icon(Iconsax.messages), label: "Group"),
-          NavigationDestination(icon: Icon(Iconsax.user), label: "Contacts"),
-          NavigationDestination(icon: Icon(Iconsax.setting), label: "Setting"),
-        ],
-        onDestinationSelected: (index) => setState(() {
-          currentIndex = index;
-          pageController.jumpToPage(index);
-        }),
+      bottomNavigationBar: Container(
+        margin: const EdgeInsets.fromLTRB(20, 0, 20, 14),
+        decoration: BoxDecoration(
+          color: scheme.surface,
+          borderRadius: BorderRadius.circular(26),
+          boxShadow: [
+            BoxShadow(
+              color: scheme.shadow.withOpacity(0.10),
+              blurRadius: 24,
+              offset: const Offset(0, 10),
+            ),
+            BoxShadow(
+              color: scheme.shadow.withOpacity(0.05),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: NavigationBar(
+          backgroundColor: Colors.transparent,
+          surfaceTintColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          indicatorColor: scheme.primary.withOpacity(0.15),
+          elevation: 0,
+          height: 66,
+          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+          selectedIndex: currentIndex,
+          destinations: const [
+            NavigationDestination(icon: Icon(Iconsax.message), label: 'Chats'),
+            NavigationDestination(icon: Icon(Iconsax.messages), label: 'Groups'),
+            NavigationDestination(icon: Icon(Iconsax.user), label: 'Contacts'),
+            NavigationDestination(icon: Icon(Iconsax.setting), label: 'Settings'),
+          ],
+          onDestinationSelected: (index) => setState(() {
+            currentIndex = index;
+            pageController.jumpToPage(index);
+          }),
+        ),
       ),
     );
   }

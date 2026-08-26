@@ -10,6 +10,7 @@ import '../../../../core/utils/widgets/app_button.dart';
 import '../../../../core/utils/widgets/app_outline_button.dart';
 import '../../../../core/utils/widgets/app_text_field.dart';
 import '../../../../core/utils/widgets/logo_app.dart';
+import '../widgets/auth_background.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -37,20 +38,32 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  void _submit(BuildContext context, bool isSignUp) {
+    if (formKey.currentState?.validate() ?? false) {
+      context.read<AuthBloc>().add(
+            isSignUp
+                ? SignUpRequested(
+                    email: emailController.text,
+                    password: passwordController.text,
+                  )
+                : SignInRequested(
+                    email: emailController.text,
+                    password: passwordController.text,
+                  ),
+          );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final muted = scheme.onSurface.withOpacity(0.6);
+
     return BlocProvider(
       create: (context) => getIt<AuthBloc>(),
       child: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthSuccess) {
-            // Navigator.pushAndRemoveUntil(
-            //   context,
-            //   MaterialPageRoute(
-            //     builder: (context) => const SetupProfileScreen(),
-            //   ),
-            //   (route) => false,
-            // );
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(state.message)),
             );
@@ -61,106 +74,155 @@ class _LoginScreenState extends State<LoginScreen> {
           }
         },
         child: Scaffold(
-          appBar: AppBar(),
-          body: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Form(
-                key: formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const LogoApp(),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Welcome Back!',
-                      style: Theme.of(context).textTheme.headlineLarge,
-                    ),
-                    Text(
-                      'New Chat App',
-                      style: Theme.of(context).textTheme.labelMedium,
-                    ),
-                    const SizedBox(height: 16),
-                    AppTextField(
-                      controller: emailController,
-                      label: 'Email',
-                      prefixIcon: const Icon(Icons.mail_outline_outlined),
-                      validator: Validators.email,
-                    ),
-                    const SizedBox(height: 16),
-                    AppTextField(
-                      controller: passwordController,
-                      label: 'Password',
-                      prefixIcon: const Icon(Iconsax.check),
-                      isPassword: true,
-                      validator: Validators.password,
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const ForgetPasswordScreen(),
+          body: SafeArea(
+            child: AuthBackground(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Center(
+                        child: Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: scheme.surface,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: scheme.primary.withOpacity(0.16),
+                                blurRadius: 32,
+                                offset: const Offset(0, 12),
                               ),
-                            );
-                          },
-                          child: const Text('Forget Password?'),
+                              BoxShadow(
+                                color: scheme.shadow.withOpacity(0.05),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: const LogoApp(size: 52),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    BlocBuilder<AuthBloc, AuthState>(
-                      builder: (context, state) {
-                        return AppButton(
-                          onPressed: state is AuthLoading
-                              ? null
-                              : () {
-                                  if (formKey.currentState?.validate() ??
-                                      false) {
-                                    context.read<AuthBloc>().add(
-                                          SignInRequested(
-                                            email: emailController.text,
-                                            password: passwordController.text,
-                                          ),
-                                        );
-                                  }
-                                },
-                          text: 'Login'.toUpperCase(),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    BlocBuilder<AuthBloc, AuthState>(
-                      builder: (context, state) {
-                        if (state is AuthLoading) {
-                          return const Center(
-                            child: CircularProgressIndicator(),
+                      ),
+                      const SizedBox(height: 32),
+                      Text(
+                        'Welcome Back',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.5,
+                          color: scheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Sign in to continue your conversations',
+                        textAlign: TextAlign.center,
+                        style:
+                            TextStyle(fontSize: 14, color: muted, height: 1.5),
+                      ),
+                      const SizedBox(height: 40),
+                      AppTextField(
+                        controller: emailController,
+                        label: 'Email',
+                        prefixIcon:
+                            Icon(Iconsax.sms, size: 20, color: muted),
+                        keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.next,
+                        autofillHints: const [AutofillHints.email],
+                        validator: Validators.email,
+                      ),
+                      const SizedBox(height: 16),
+                      AppTextField(
+                        controller: passwordController,
+                        label: 'Password',
+                        prefixIcon:
+                            Icon(Iconsax.lock_1, size: 20, color: muted),
+                        isPassword: true,
+                        textInputAction: TextInputAction.done,
+                        autofillHints: const [AutofillHints.password],
+                        validator: Validators.password,
+                      ),
+                      const SizedBox(height: 6),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const ForgetPasswordScreen(),
+                            ),
+                          ),
+                          style: TextButton.styleFrom(
+                            foregroundColor: scheme.primary,
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                          ),
+                          child: const Text(
+                            'Forgot Password?',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 22),
+                      BlocBuilder<AuthBloc, AuthState>(
+                        builder: (context, state) {
+                          final loading = state is AuthLoading;
+                          return AppButton(
+                            onPressed: loading ? null : () => _submit(context, false),
+                            isLoading: loading,
+                            text: 'Log In',
                           );
-                        }
-                        return AppOutlineButton(
-                          onPressed: state is AuthLoading
-                              ? null
-                              : () {
-                                  if (formKey.currentState?.validate() ??
-                                      false) {
-                                    context.read<AuthBloc>().add(
-                                          SignUpRequested(
-                                            email: emailController.text,
-                                            password: passwordController.text,
-                                          ),
-                                        );
-                                  }
-                                },
-                          text: 'Create Account'.toUpperCase(),
-                        );
-                      },
-                    ),
-                  ],
+                        },
+                      ),
+                      const SizedBox(height: 24),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Divider(
+                              thickness: 1,
+                              color: scheme.onSurface.withOpacity(0.10),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 14),
+                            child: Text(
+                              'OR',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 1.5,
+                                color: muted,
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Divider(
+                              thickness: 1,
+                              color: scheme.onSurface.withOpacity(0.10),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      BlocBuilder<AuthBloc, AuthState>(
+                        builder: (context, state) {
+                          return AppOutlineButton(
+                            onPressed:
+                                state is AuthLoading ? null : () => _submit(context, true),
+                            isLoading: false,
+                            icon: Iconsax.user_add,
+                            text: 'Create Account',
+                          );
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

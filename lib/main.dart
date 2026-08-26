@@ -55,17 +55,13 @@ class MyApp extends StatelessWidget {
           return MaterialApp(
             debugShowCheckedModeBanner: false,
             themeMode: theme.themeMode,
-            darkTheme: ThemeData(
-              colorScheme: ColorScheme.fromSeed(
-                seedColor: Color(theme.mainColor),
-                brightness: Brightness.dark,
-              ),
+            darkTheme: _buildTheme(
+              Color(theme.mainColor),
+              Brightness.dark,
             ),
-            theme: ThemeData(
-              colorScheme: ColorScheme.fromSeed(
-                seedColor: Color(theme.mainColor),
-                brightness: Brightness.light,
-              ),
+            theme: _buildTheme(
+              Color(theme.mainColor),
+              Brightness.light,
             ),
             home: BlocBuilder<SessionCubit, SessionState>(
               builder: (context, session) {
@@ -83,4 +79,50 @@ class MyApp extends StatelessWidget {
       ),
     );
   }
+}
+
+ThemeData _buildTheme(Color seed, Brightness brightness) {
+  final colorScheme = ColorScheme.fromSeed(
+    seedColor: seed,
+    brightness: brightness,
+  );
+  return ThemeData(
+    colorScheme: colorScheme,
+    appBarTheme: AppBarTheme(
+      centerTitle: false,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      backgroundColor: colorScheme.surface,
+      titleTextStyle: TextStyle(
+        fontSize: 17,
+        fontWeight: FontWeight.w700,
+        letterSpacing: -0.2,
+        color: colorScheme.onSurface,
+      ),
+    ),
+    snackBarTheme: SnackBarThemeData(
+      behavior: SnackBarBehavior.floating,
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+      ),
+    ),
+    dialogTheme: DialogTheme(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+      ),
+    ),
+    switchTheme: SwitchThemeData(
+      thumbColor: WidgetStateProperty.resolveWith(
+        (states) => states.contains(WidgetState.selected)
+            ? colorScheme.onPrimary
+            : null,
+      ),
+      trackColor: WidgetStateProperty.resolveWith(
+        (states) => states.contains(WidgetState.selected)
+            ? colorScheme.primary
+            : null,
+      ),
+    ),
+  );
 }

@@ -13,6 +13,7 @@ import '../../../../core/utils/widgets/app_text_field.dart';
 import '../../../contact/presentation/manager/contacts/contacts_cubit.dart';
 import '../../domain/entities/chat_group_entity.dart';
 import '../manager/group/group_bloc.dart';
+import 'create_group_screen.dart' show MemberCheckboxTile;
 
 class EditGroupScreen extends StatefulWidget {
   final ChatGroupEntity groupInfo;
@@ -60,6 +61,8 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (_) => getIt<GroupBloc>()),
@@ -85,44 +88,86 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
           return Scaffold(
             appBar: AppBar(title: const Text('Edit Group')),
             body: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
               child: Form(
                 key: formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Center(
-                      child: GestureDetector(
-                        onTap: isAdminNow ? _pickImage : null,
-                        child: CircleAvatar(
-                          radius: 50,
-                          backgroundImage: imageFile != null
-                              ? FileImage(imageFile!)
-                              : (widget.groupInfo.image!.isNotEmpty
-                                  ? NetworkImage(widget.groupInfo.image!)
-                                  : null),
-                          child: imageFile == null &&
-                                  widget.groupInfo.image!.isEmpty
-                              ? const Icon(Iconsax.camera, size: 30)
-                              : null,
-                        ),
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: scheme.primary.withOpacity(0.35),
+                                width: 2,
+                              ),
+                            ),
+                            child: CircleAvatar(
+                              radius: 44,
+                              backgroundImage: imageFile != null
+                                  ? FileImage(imageFile!)
+                                  : (widget.groupInfo.image!.isNotEmpty
+                                      ? NetworkImage(widget.groupInfo.image!)
+                                      : null),
+                              backgroundColor:
+                                  scheme.primary.withOpacity(0.10),
+                              child: imageFile == null &&
+                                      widget.groupInfo.image!.isEmpty
+                                  ? Icon(Iconsax.camera,
+                                      size: 28, color: scheme.primary)
+                                  : null,
+                            ),
+                          ),
+                          if (isAdminNow)
+                            Positioned(
+                              bottom: -2,
+                              right: -2,
+                              child: Material(
+                                color: scheme.primary,
+                                shape: const CircleBorder(),
+                                elevation: 3,
+                                shadowColor:
+                                    scheme.primary.withOpacity(0.4),
+                                child: InkWell(
+                                  customBorder: const CircleBorder(),
+                                  onTap: _pickImage,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(9),
+                                    child: Icon(
+                                      Iconsax.edit_2,
+                                      size: 16,
+                                      color: scheme.onPrimary,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 26),
                     AppTextField(
                       controller: nameCon,
                       label: 'Group Name',
+                      textInputAction: TextInputAction.done,
                       validator: (v) => v!.isEmpty ? 'Required' : null,
                     ),
-                    const SizedBox(height: 16),
-                    const Text('Members',
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 10),
                     BlocBuilder<ContactsCubit, ContactsState>(
                       builder: (context, contactsState) {
                         if (contactsState is ContactsLoading) {
-                          return const Center(
-                              child: CircularProgressIndicator());
+                          return const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 32),
+                            child: Center(
+                              child:
+                                  CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          );
                         }
                         if (contactsState is ContactsError) {
                           return Center(child: Text(contactsState.message));
@@ -132,70 +177,72 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
                               .where((c) => c.id != myId)
                               .toList();
 
-                          // الأعضاء الحاليين للمجموعة
                           final currentMembers = available
                               .where((c) =>
                                   widget.groupInfo.members.contains(c.id))
                               .toList();
-                          // الباقون للإضافة
                           final others = available
                               .where((c) =>
                                   !widget.groupInfo.members.contains(c.id))
                               .toList();
 
                           return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               if (currentMembers.isNotEmpty) ...[
-                                const Text('Current Members',
-                                    style:
-                                        TextStyle(fontWeight: FontWeight.bold)),
-                                ...currentMembers
-                                    .map((user) => CheckboxListTile(
-                                          title: Text(user.name),
-                                          subtitle: Text(user.email),
-                                          value: true,
-                                          onChanged: isAdminNow
-                                              ? (val) {
-                                                  if (val == false) {
-                                                    setState(() =>
-                                                        selectedMembers
-                                                            .remove(user.id));
-                                                  }
-                                                }
-                                              : null,
-                                        )),
+                                const _SectionLabel(title: 'CURRENT MEMBERS'),
+                                ...currentMembers.map(
+                                  (user) => MemberCheckboxTile(
+                                    name: user.name,
+                                    email: user.email,
+                                    imageUrl: user.imageUrl,
+                                    value: true,
+                                    onChanged: isAdminNow
+                                        ? (val) {
+                                            if (val == false) {
+                                              setState(() =>
+                                                  selectedMembers
+                                                      .remove(user.id));
+                                            }
+                                          }
+                                        : null,
+                                  ),
+                                ),
                               ],
                               if (others.isNotEmpty) ...[
-                                const Text('Add Members',
-                                    style:
-                                        TextStyle(fontWeight: FontWeight.bold)),
-                                ...others.map((user) => CheckboxListTile(
-                                      title: Text(user.name),
-                                      subtitle: Text(user.email),
-                                      value: selectedMembers.contains(user.id),
-                                      onChanged: isAdminNow
-                                          ? (val) {
-                                              setState(() {
-                                                if (val == true) {
-                                                  selectedMembers.add(user.id);
-                                                } else {
-                                                  selectedMembers
-                                                      .remove(user.id);
-                                                }
-                                              });
-                                            }
-                                          : null,
-                                    )),
+                                const _SectionLabel(title: 'ADD MEMBERS'),
+                                ...others.map(
+                                  (user) => MemberCheckboxTile(
+                                    name: user.name,
+                                    email: user.email,
+                                    imageUrl: user.imageUrl,
+                                    value:
+                                        selectedMembers.contains(user.id),
+                                    onChanged: isAdminNow
+                                        ? (val) {
+                                            setState(() {
+                                              if (val == true) {
+                                                selectedMembers.add(user.id);
+                                              } else {
+                                                selectedMembers
+                                                    .remove(user.id);
+                                              }
+                                            });
+                                          }
+                                        : null,
+                                  ),
+                                ),
                               ],
                             ],
                           );
                         }
-                        return const SizedBox();
+                        return const SizedBox.shrink();
                       },
                     ),
                     const SizedBox(height: 24),
                     if (isAdminNow)
                       AppButton(
+                        isLoading: state is GroupLoadding,
                         onPressed: state is GroupLoadding
                             ? null
                             : () {
@@ -211,6 +258,7 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
                                       );
                                 }
                               },
+                        icon: Iconsax.tick_circle,
                         text: 'Save Changes',
                       ),
                   ],
@@ -219,6 +267,28 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 10, top: 6),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 1.2,
+          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+        ),
       ),
     );
   }

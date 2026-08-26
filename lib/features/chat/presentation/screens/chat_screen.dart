@@ -8,7 +8,9 @@ import 'package:iconsax/iconsax.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/utils/date_format.dart';
 import '../../../../core/utils/helper_functions.dart';
+import '../../../../core/utils/widgets/chat_composer.dart';
 import '../../../auth/domain/entities/user_entity.dart';
+import '../../../home/presentation/widgets/fallback_avatar.dart';
 import '../../domain/entities/message_entity.dart';
 import '../manager/chat_message/chat_message_bloc.dart';
 import '../manager/messages/messages_cubit.dart';
@@ -85,33 +87,75 @@ class _ChatScreenBodyState extends State<ChatScreenBody> {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        toolbarHeight: 72,
+        title: Row(
           children: [
-            Text(
-              widget.widget.userInfo.name,
-              style: Theme.of(context).textTheme.labelLarge,
+            FallbackAvatar(
+              name: widget.widget.userInfo.name,
+              imageUrl: widget.widget.userInfo.imageUrl,
+              radius: 19,
             ),
-            BlocBuilder<UsersCubit, UsersState>(
-              builder: (context, state) {
-                if (state is! UsersLoaded || state.users.isEmpty) {
-                  return const SizedBox.shrink();
-                }
-                final peer = state.users.first;
-                final online = peer.online;
-                final lastActivated = peer.lastActivated ?? '';
-                final lastSeen = lastActivated.isEmpty
-                    ? ''
-                    : 'Last seen ${AppDateTimeFormatter.dateAndTime(lastActivated)} at ${AppDateTimeFormatter.timeDate(lastActivated)}';
-                return Text(
-                  online ? 'Online' : lastSeen,
-                  style: Theme.of(context).textTheme.labelSmall!.copyWith(
-                        color: online ? Colors.green : Colors.grey,
-                      ),
-                );
-              },
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.widget.userInfo.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                  BlocBuilder<UsersCubit, UsersState>(
+                    builder: (context, state) {
+                      if (state is! UsersLoaded || state.users.isEmpty) {
+                        return const SizedBox.shrink();
+                      }
+                      final peer = state.users.first;
+                      final online = peer.online;
+                      final lastActivated = peer.lastActivated ?? '';
+                      final lastSeen = lastActivated.isEmpty
+                          ? ''
+                          : 'Last seen ${AppDateTimeFormatter.dateAndTime(lastActivated)} at ${AppDateTimeFormatter.timeDate(lastActivated)}';
+                      return Row(
+                        children: [
+                          Container(
+                            width: 7,
+                            height: 7,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color:
+                                  online ? Colors.greenAccent.shade400 : null,
+                            ),
+                          ),
+                          if (online) const SizedBox(width: 5),
+                          Flexible(
+                            child: Text(
+                              online ? 'Online' : lastSeen,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                color: online
+                                    ? Colors.greenAccent.shade400
+                                    : scheme.onSurface.withOpacity(0.5),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -145,46 +189,23 @@ class _ChatScreenBodyState extends State<ChatScreenBody> {
           ]
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Column(
-          children: [
-            Expanded(
-              child: BlocBuilder<MessagesCubit, MessagesState>(
-                  builder: (context, state) {
-                if (state is MessagesLoaded) {
-                  final List<MessageEntity> messages = state.messages;
-                  return messages.isNotEmpty
-                      ? ListView.builder(
-                          reverse: true,
-                          itemCount: messages.length,
-                          itemBuilder: (context, index) {
-                            return GestureDetector(
-                              onTap: () {
-                                if (selectedMessages.isNotEmpty) {
-                                  setState(() {
-                                    selectedMessages
-                                            .contains(messages[index].id)
-                                        ? selectedMessages
-                                            .remove(messages[index].id)
-                                        : selectedMessages
-                                            .add(messages[index].id);
-                                  });
-                                }
-                                if (copyMessages.isNotEmpty) {
-                                  setState(() {
-                                    messages[index].type == 'text'
-                                        ? copyMessages.contains(
-                                                messages[index].message)
-                                            ? copyMessages.remove(
-                                                messages[index].message)
-                                            : copyMessages.add(
-                                                messages[index].message)
-                                        : null;
-                                  });
-                                }
-                              },
-                              onLongPress: () {
+      body: Column(
+        children: [
+          Expanded(
+            child: BlocBuilder<MessagesCubit, MessagesState>(
+                builder: (context, state) {
+              if (state is MessagesLoaded) {
+                final List<MessageEntity> messages = state.messages;
+                return messages.isNotEmpty
+                    ? ListView.builder(
+                        reverse: true,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 10),
+                        itemCount: messages.length,
+                        itemBuilder: (context, index) {
+                          return GestureDetector(
+                            onTap: () {
+                              if (selectedMessages.isNotEmpty) {
                                 setState(() {
                                   selectedMessages
                                           .contains(messages[index].id)
@@ -192,134 +213,128 @@ class _ChatScreenBodyState extends State<ChatScreenBody> {
                                           .remove(messages[index].id)
                                       : selectedMessages
                                           .add(messages[index].id);
-
+                                });
+                              }
+                              if (copyMessages.isNotEmpty) {
+                                setState(() {
                                   messages[index].type == 'text'
-                                      ? copyMessages
-                                              .contains(messages[index].message)
+                                      ? copyMessages.contains(
+                                              messages[index].message)
                                           ? copyMessages.remove(
                                               messages[index].message)
-                                          : copyMessages
-                                              .add(messages[index].message)
+                                          : copyMessages.add(
+                                              messages[index].message)
                                       : null;
                                 });
-                              },
-                              child: ChatMessageCard(
-                                messageInfo: messages[index],
-                                roomId: widget.roomId,
-                                isSelected:
-                                    selectedMessages.contains(messages[index].id),
-                              ),
-                            );
-                          },
-                        )
-                      : Center(
-                          child: GestureDetector(
-                            onTap: () {
-                              context.read<ChatMessageBloc>().add(
-                                    SendMessageEvent(
-                                      roomId: widget.roomId,
-                                      message: 'Assalamu Alaikum 👋',
-                                      userInfo: widget.widget.userInfo,
-                                    ),
-                                  );
+                              }
                             },
-                            child: Card(
-                              child: Padding(
-                                padding: const EdgeInsets.all(12.0),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      "👋",
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .displayMedium,
-                                    ),
-                                    const SizedBox(
-                                      height: 16,
-                                    ),
-                                    Text(
-                                      "Say Assalamu Alaikum",
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyMedium,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                }
-                return Container();
-              }),
-            ),
-            Row(
-              children: [
-                Expanded(
-                  child: Card(
-                    child: TextField(
-                      controller: widget.messageController,
-                      maxLines: 5,
-                      minLines: 1,
-                      decoration: InputDecoration(
-                        suffixIcon: Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              onPressed: () {},
-                              icon: const Icon(Iconsax.emoji_happy),
-                            ),
-                            IconButton(
-                              onPressed: () async {
-                                File? image = await HelperFunctions.pickImage();
-                                if (image != null) {
-                                  final bytes = await image.readAsBytes();
+                            onLongPress: () {
+                              setState(() {
+                                selectedMessages
+                                        .contains(messages[index].id)
+                                    ? selectedMessages
+                                        .remove(messages[index].id)
+                                    : selectedMessages
+                                        .add(messages[index].id);
 
-                                  context.read<ChatMessageBloc>().add(
-                                        SendImageEvent(
-                                          userInfo: widget.widget.userInfo,
-                                          roomId: widget.roomId,
-                                          fileImage: bytes,
-                                          fileExtension:
-                                              image.path.split('.').last,
-                                        ),
-                                      );
-                                }
-                              },
-                              icon: const Icon(Iconsax.camera),
-                            ),
-                          ],
-                        ),
-                        border: InputBorder.none,
-                        hintText: "Message",
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 10),
-                      ),
-                    ),
-                  ),
-                ),
-                IconButton.filled(
-                  onPressed: () {
-                    if (widget.messageController.text != '') {
-                      context.read<ChatMessageBloc>().add(
-                            SendMessageEvent(
-                              userInfo: widget.widget.userInfo,
+                                messages[index].type == 'text'
+                                    ? copyMessages
+                                            .contains(messages[index].message)
+                                        ? copyMessages.remove(
+                                            messages[index].message)
+                                        : copyMessages
+                                            .add(messages[index].message)
+                                    : null;
+                              });
+                            },
+                            child: ChatMessageCard(
+                              messageInfo: messages[index],
                               roomId: widget.roomId,
-                              message: widget.messageController.text,
+                              isSelected:
+                                  selectedMessages.contains(messages[index].id),
                             ),
                           );
-                      widget.messageController.text = '';
-                    }
-                  },
-                  icon: const Icon(Iconsax.send_1),
-                ),
-              ],
-            )
-          ],
-        ),
+                        },
+                      )
+                    : Center(
+                        child: GestureDetector(
+                          onTap: () {
+                            context.read<ChatMessageBloc>().add(
+                                  SendMessageEvent(
+                                    roomId: widget.roomId,
+                                    message: 'Assalamu Alaikum 👋',
+                                    userInfo: widget.widget.userInfo,
+                                  ),
+                                );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 32, vertical: 26),
+                            decoration: BoxDecoration(
+                              color: scheme.primary.withOpacity(0.07),
+                              borderRadius: BorderRadius.circular(26),
+                              border: Border.all(
+                                color: scheme.primary.withOpacity(0.18),
+                              ),
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  "👋",
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .displayMedium,
+                                ),
+                                const SizedBox(height: 14),
+                                Text(
+                                  "Say Assalamu Alaikum",
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: scheme.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+              }
+              return const SizedBox.shrink();
+            }),
+          ),
+          ChatComposer(
+            controller: widget.messageController,
+            onSend: () {
+              if (widget.messageController.text != '') {
+                context.read<ChatMessageBloc>().add(
+                      SendMessageEvent(
+                        userInfo: widget.widget.userInfo,
+                        roomId: widget.roomId,
+                        message: widget.messageController.text,
+                      ),
+                    );
+                widget.messageController.text = '';
+              }
+            },
+            onPickImage: () async {
+              File? image = await HelperFunctions.pickImage();
+              if (image == null) return;
+              final bytes = await image.readAsBytes();
+              if (!context.mounted) return;
+              context.read<ChatMessageBloc>().add(
+                    SendImageEvent(
+                      userInfo: widget.widget.userInfo,
+                      roomId: widget.roomId,
+                      fileImage: bytes,
+                      fileExtension: image.path.split('.').last,
+                    ),
+                  );
+            },
+          ),
+        ],
       ),
     );
   }
