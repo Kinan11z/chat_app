@@ -9,8 +9,7 @@
 .history
 .svn/
 migrate_working_dir/
-google_services
-lib\core\supabase_config.dart
+
 
 # IntelliJ related
 *.iml
